@@ -4,6 +4,10 @@
   "private": true,
   "dependencies": {
     "@material-ui/core": "^3.2.0",
+    "@material-ui/icons": "^3.0.1",
+    "aws-amplify": "^1.1.6",
+    "aws-amplify-react": "^2.0.7",
+    "material-ui-icons": "^1.0.0-beta.36",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "react-scripts": "2.0.4"
