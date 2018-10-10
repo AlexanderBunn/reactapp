@@ -47,12 +47,20 @@ import NavigationIcon from '@material-ui/icons/Navigation';
 // GRID
 import Grid from '@material-ui/core/Grid';
 
-// DIALOG
+// EDIT DIALOG
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import TextField from '@material-ui/core/TextField';
+
+// MATCH DIALOG
+import ThumbUpIcon from '@material-ui/icons/ThumbUp';
+import ThumbDownIcon from '@material-ui/icons/ThumbDown';
+
+// RATING DIALOG
+import Star from '@material-ui/icons/Star';
+import StarBorder from '@material-ui/icons/StarBorder';
 
 // AMPLIFY AUTHENICATOR
 import { ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignIn, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
@@ -124,7 +132,6 @@ const styles = theme => ({
 const apiName = config.apiGateway.NAME;
 
 class App extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -136,51 +143,47 @@ class App extends Component {
       editObj: null,
       editTitle: "",
       editBody: "",
+      matching: false,
+      matchObj: null,
+      matchTitle: "Match Title",
+      matchBody: "This is the match body.",
+      rating: true,
       items: [],
     };
     this.updateItems(this.state.itemType);
   }
-
   updateItems = (newType) => {
     API.get(apiName, '/' + newType + '/' + this.state.username).then(response => {
       this.setState({items: response.Items})
     }).catch(err => {alert(err.message)});
   }
-
   handleChange = name => event => {
     this.setState({
       [name]: event.target.value,
     });
   };
-
   toggleDrawer = (open) => () => {
     this.setState({drawer: open});
   };
-
   handleOpenMenu = event => {
     this.setState({ anchorEl: event.currentTarget });
   };
-
   handleCloseMenu = () => {
     this.setState({ anchorEl: null });
   };
-
   handleNew = () => () => {
     let newObj = {};
     this.handleEdit(newObj);
   }
-
   handleEdit = (obj) => {
     this.setState({ editObj: obj });
     this.setState({ editTitle: obj.title });
     this.setState({ editBody: obj.body });
     this.setState({ editing: true });
   }
-
   // ADD VALIDATE FORM
   handleSave = () => {
     let obj = this.state.editObj;
-    obj.disabled = true;
     obj.title = this.state.editTitle;
     obj.body = this.state.editBody;
     // API CALL
@@ -191,14 +194,12 @@ class App extends Component {
     }).catch(err => {alert(err.message)});
     this.handleDiscard();
   }
-
   handleDiscard = () => {
     this.setState({ editObj: null });
     this.setState({ editTitle: "" });
     this.setState({ editBody: "" });
     this.setState({ editing: false});
   }
-
   handleDelete = (obj) => {
     API.del(apiName, '/' + this.state.itemType + '/' + obj.hashKey).then(response => {
       this.setState(prevState => ({
@@ -206,7 +207,6 @@ class App extends Component {
       }));
     }).catch(err => {alert(err.message)});
   }
-
   handleSwitchUser = (user) => {
     let newType = this.state.itemType;
     if (user === 1) {
@@ -218,17 +218,15 @@ class App extends Component {
     this.updateItems(newType);
     this.handleCloseMenu();
   }
-
   handleSignOut = () => {
     Auth.signOut()
       .then(() => {this.props.onStateChange('signedOut', null)})
       .catch(err => {alert('err: ', err.message)})
   }
-
   makeCard = (obj) => {
     const { classes } = this.props;
     return (
-      <Card className={classes.card} disabled={obj.disabled}>
+      <Card className={classes.card}>
         <CardActionArea onClick={() => this.handleEdit(obj)}>
           <CardContent>
             <Typography gutterBottom variant="h5">
@@ -260,7 +258,6 @@ class App extends Component {
       </Card>
     );
   }
-
   render() {
     const { classes } = this.props;
     const { anchorEl } = this.state;
@@ -396,6 +393,58 @@ class App extends Component {
             <Button onClick={this.handleSave} color="primary">
               Save
             </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={this.state.matching}
+          aria-labelledby="match-dialog-title"
+          fullWidth={true}
+          maxWidth={'md'}
+          >
+          <DialogTitle id="match-dialog-title">Find Matches</DialogTitle>
+          <DialogContent>
+            <Paper className={classes.paper} elevation={0}>
+              <Typography variant="inherit" >
+                {this.state.matchBody}
+              </Typography>
+              </Paper>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={this.handleBadMatch} color="secondary">
+              <ThumbDownIcon />
+            </Button>
+            <Button onClick={this.handleGoodMatch} color="primary">
+              <ThumbUpIcon />
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={this.state.rating}
+          aria-labelledby="match-dialog-title"
+          fullWidth={true}
+          maxWidth={'md'}
+          >
+          <DialogTitle id="match-dialog-title">Rating</DialogTitle>
+          <DialogContent style={{textAlign: 'center'}}>
+            <Typography variant="inherit"> Rating: </Typography>
+            <Button onClick={this.handleBadMatch} >
+              <Star />
+            </Button>
+            <Button onClick={this.handleBadMatch} >
+              <Star />
+            </Button>
+            <Button onClick={this.handleBadMatch} >
+              <Star />
+            </Button>
+            <Button onClick={this.handleBadMatch} >
+              <Star />
+            </Button>
+            <Button onClick={this.handleBadMatch} >
+              <Star />
+            </Button>
+          </DialogContent>
+          <DialogActions>
+
           </DialogActions>
         </Dialog>
       </div>
