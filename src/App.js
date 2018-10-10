@@ -58,6 +58,8 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import TextField from '@material-ui/core/TextField';
+
 
 // AMPLIFY AUTHENICATOR
 import { Greetings, ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignIn, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
@@ -110,13 +112,20 @@ const styles = theme => ({
     paddingTop: theme.spacing.unit * 2,
     paddingBottom: theme.spacing.unit * 2,
   },
-  addButton: {
+  addButtonContainer: {
     position: 'fixed',
     bottom: 40,
-    paddingRight: '25%',
-    paddingLeft: '25%',
-    width: '50%',
-    textAlign: 'center'
+    paddingRight: '40%',
+    paddingLeft: '40%',
+    width: '20%',
+    textAlign: 'center',
+    pointerEvents: 'none',
+  },
+  addButton: {
+    pointerEvents: 'all',
+  },
+  dialogField: {
+    width: '100%',
   },
 });
 
@@ -126,23 +135,33 @@ class App extends Component {
     super(props);
     const testObj1 = {
       "title" : "Title 1",
+      "id" : 1,
       "body" : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam efficitur tempor eros a rhoncus. Maecenas at luctus urna. Mauris in nibh leo. Donec vel tellus nec enim volutpat eleifend a vitae ex. Fusce tincidunt nisl risus, a tempus quam malesuada eu. In pretium, metus ut euismod tincidunt, dolor lectus aliquet diam, nec tincidunt tortor urna in ex. In hac habitasse platea dictumst. Mauris leo tortor, laoreet sed luctus laoreet, fermentum quis sapien. Nam scelerisque sapien ut arcu euismod, nec lacinia ipsum dapibus. In ultrices facilisis odio egestas efficitur. Aenean dignissim massa a blandit gravida. Pellentesque pulvinar enim id eros interdum euismod non et nunc. Morbi est leo, tincidunt vel metus eu, dapibus egestas enim. Morbi vel pulvinar dui. Vivamus et dui quam. Quisque mollis lorem orci, eget feugiat nisi dignissim at.",
     }
     const testObj2 = {
       "title" : "Title 2",
+      "id" : 2,
       "body" : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam efficitur tempor eros a rhoncus."
     }
     const testItems = [testObj1, testObj2, testObj1, testObj2, testObj2, testObj1, testObj2, testObj2, testObj1];
 
     this.state = {
-      itemType: "Job Post",
+      itemType: 'Resume',
       anchorEl: null,
       drawer: false,
       editing: false,
       editObj: null,
+      editTitle: "",
+      editBody: "",
       items: testItems,
     };
   }
+
+  handleChange = name => event => {
+    this.setState({
+      [name]: event.target.value,
+    });
+  };
 
   toggleDrawer = (open) => () => {
     this.setState({drawer: open});
@@ -162,15 +181,47 @@ class App extends Component {
   }
 
   handleEdit = (obj) => {
-    this.setState({ editing: true});
+    this.setState({ editTitle: obj.title });
+    this.setState({ editBody: obj.body });
+    this.setState({ editing: true });
   }
 
   handleSave = (obj) => {
+    obj.title = this.state.editTitle;
+    obj.body = this.state.editBody;
+    this.handleDelete(obj);
+    this.setState(prevState => ({
+      items: prevState.items.concat(obj)
+    }));
+    // API CALL
+    this.setState({ editTitle: "" });
+    this.setState({ editBody: "" });
     this.setState({ editing: false});
   }
 
-  handleDialogClose = () => {
+  handleDiscard = () => {
+    this.setState({ editTitle: "" });
+    this.setState({ editBody: "" });
     this.setState({ editing: false});
+  }
+
+  handleDelete = (obj) => {
+    console.log(obj);
+    this.setState({ editTitle: "" });
+    this.setState({ editBody: "" });
+    this.setState(prevState => ({
+      items: prevState.items.filter(el => el.id != obj.id)
+    }));
+    // API CALL
+  }
+
+  handleSwitchUser = (user) => {
+    if (user == 1) {
+      this.setState({ itemType: 'Resume' })
+    } else if (user == 2) {
+      this.setState({ itemType: 'Job' })
+    }
+    this.handleCloseMenu();
   }
 
   handleSignOut = () => {
@@ -182,8 +233,8 @@ class App extends Component {
   makeCard = (obj) => {
     const { classes } = this.props;
     return (
-      <Card className={classes.card}>
-        <CardActionArea>
+      <Card className={classes.card} id={obj.id}>
+        <CardActionArea onClick={() => this.handleEdit(obj)}>
           <CardContent>
             <Typography gutterBottom variant="h5" component="h2">
               {obj.title}
@@ -200,7 +251,7 @@ class App extends Component {
             aria-label="Edit"
             className={classes.button}
             value={obj.id}
-            onClick={(e) => this.handleEdit(obj)}
+            onClick={() => this.handleEdit(obj)}
           >
             <EditIcon />
           </Button>
@@ -208,7 +259,7 @@ class App extends Component {
             <NavigationIcon className={classes.extendedIcon} />
             Find Matches
           </Button>
-          <Button variant="fab" aria-label="Delete" className={classes.button}>
+          <Button variant="fab" aria-label="Delete" className={classes.button} onClick={() => this.handleDelete(obj)}>
             <DeleteIcon />
           </Button>
         </CardActions>
@@ -287,8 +338,8 @@ class App extends Component {
                 open={open}
                 onClose={this.handleCloseMenu}
                >
-               <MenuItem onClick={this.handleCloseMenu}>Job-seeker</MenuItem>
-               <MenuItem onClick={this.handleCloseMenu}>Employer</MenuItem>
+               <MenuItem onClick={() => this.handleSwitchUser(1)}>Job-seeker</MenuItem>
+               <MenuItem onClick={() => this.handleSwitchUser(2)}>Employer</MenuItem>
                <MenuItem onClick={this.handleSignOut}>Sign out</MenuItem>
              </Menu>
            </div>
@@ -315,19 +366,43 @@ class App extends Component {
             </Paper>
           ))}
         </Grid>
-        <div className={classes.addButton}>
-          <Button variant="fab" color='secondary' onClick={this.handleNew()}><AddIcon /></Button>
+        <div className={classes.addButtonContainer}>
+          <Button variant="fab" color='secondary' onClick={this.handleNew()} className={classes.addButton}><AddIcon /></Button>
         </div>
         <Dialog
           open={this.state.editing}
-          onClose={this.handleSave}
+          onClose={this.handleDiscard}
           aria-labelledby="form-dialog-title"
-        >
+          fullWidth={true}
+          maxWidth={'md'}
+          scroll={'body'}
+          >
           <DialogTitle id="form-dialog-title">Edit {this.state.itemType}</DialogTitle>
           <DialogContent>
+            <TextField
+              id="editTitle"
+              label="Title"
+              rowsMax="1"
+              value={this.state.editTitle}
+              onChange={this.handleChange('editTitle')}
+              className={classes.dialogField}
+              margin="normal"
+              variant="outlined"
+            />
+            <TextField
+              id="editBody"
+              label="Body"
+              multiline
+              rowsMax="100"
+              value={this.state.editBody}
+              onChange={this.handleChange('editBody')}
+              className={classes.dialogField}
+              margin="normal"
+              variant="outlined"
+            />
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.handleDialogClose} color="secondary">
+            <Button onClick={this.handleDiscard} color="secondary">
               Discard
             </Button>
             <Button onClick={this.handleSave} color="primary">
