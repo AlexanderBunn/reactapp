@@ -36,37 +36,31 @@ import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
-import CardMedia from '@material-ui/core/CardMedia';
 import Paper from '@material-ui/core/Paper'
 
 // CARD ACTIONS
-import Icon from '@material-ui/core/Icon';
 import AddIcon from '@material-ui/icons/Add';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import NavigationIcon from '@material-ui/icons/Navigation';
 
-// GRID LIST
+// GRID
 import Grid from '@material-ui/core/Grid';
-import GridListTile from '@material-ui/core/GridListTile';
-import GridListTileBar from '@material-ui/core/GridListTileBar';
-import ListSubheader from '@material-ui/core/ListSubheader';
 
 // DIALOG
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import TextField from '@material-ui/core/TextField';
 
-
 // AMPLIFY AUTHENICATOR
-import { Greetings, ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignIn, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
+import { ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignIn, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
 
 // AWS AMPLIFY
-import Amplify, { Auth } from 'aws-amplify';
-import aws_exports from './exports.js';
+import Amplify, { Auth, API } from 'aws-amplify';
+import aws_exports from './exports';
+import config from './config'
 Amplify.configure(aws_exports);
 
 const styles = theme => ({
@@ -77,6 +71,7 @@ const styles = theme => ({
     justifyContent: 'space-around',
     overflow: 'hidden',
     backgroundColor: theme.palette.background.paper,
+     ...theme.typography.body2,
   },
   appBar: {
     zIndex: 100,
@@ -124,28 +119,16 @@ const styles = theme => ({
   addButton: {
     pointerEvents: 'all',
   },
-  dialogField: {
-    width: '100%',
-  },
 });
+
+const apiName = config.apiGateway.NAME;
 
 class App extends Component {
 
   constructor(props) {
     super(props);
-    const testObj1 = {
-      "title" : "Title 1",
-      "id" : 1,
-      "body" : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam efficitur tempor eros a rhoncus. Maecenas at luctus urna. Mauris in nibh leo. Donec vel tellus nec enim volutpat eleifend a vitae ex. Fusce tincidunt nisl risus, a tempus quam malesuada eu. In pretium, metus ut euismod tincidunt, dolor lectus aliquet diam, nec tincidunt tortor urna in ex. In hac habitasse platea dictumst. Mauris leo tortor, laoreet sed luctus laoreet, fermentum quis sapien. Nam scelerisque sapien ut arcu euismod, nec lacinia ipsum dapibus. In ultrices facilisis odio egestas efficitur. Aenean dignissim massa a blandit gravida. Pellentesque pulvinar enim id eros interdum euismod non et nunc. Morbi est leo, tincidunt vel metus eu, dapibus egestas enim. Morbi vel pulvinar dui. Vivamus et dui quam. Quisque mollis lorem orci, eget feugiat nisi dignissim at.",
-    }
-    const testObj2 = {
-      "title" : "Title 2",
-      "id" : 2,
-      "body" : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam efficitur tempor eros a rhoncus."
-    }
-    const testItems = [testObj1, testObj2, testObj1, testObj2, testObj2, testObj1, testObj2, testObj2, testObj1];
-
     this.state = {
+      username: Auth.user.username,
       itemType: 'Resume',
       anchorEl: null,
       drawer: false,
@@ -153,8 +136,15 @@ class App extends Component {
       editObj: null,
       editTitle: "",
       editBody: "",
-      items: testItems,
+      items: [],
     };
+    this.updateItems(this.state.itemType);
+  }
+
+  updateItems = (newType) => {
+    API.get(apiName, '/' + newType + '/' + this.state.username).then(response => {
+      this.setState({items: response.Items})
+    }).catch(err => {alert(err.message)});
   }
 
   handleChange = name => event => {
@@ -181,46 +171,51 @@ class App extends Component {
   }
 
   handleEdit = (obj) => {
+    this.setState({ editObj: obj });
     this.setState({ editTitle: obj.title });
     this.setState({ editBody: obj.body });
     this.setState({ editing: true });
   }
 
-  handleSave = (obj) => {
+  // ADD VALIDATE FORM
+  handleSave = () => {
+    let obj = this.state.editObj;
+    obj.disabled = true;
     obj.title = this.state.editTitle;
     obj.body = this.state.editBody;
-    this.handleDelete(obj);
-    this.setState(prevState => ({
-      items: prevState.items.concat(obj)
-    }));
     // API CALL
-    this.setState({ editTitle: "" });
-    this.setState({ editBody: "" });
-    this.setState({ editing: false});
+    let params = {body: obj};
+    API.put(apiName, '/' + this.state.itemType + '/' + this.state.username, params).then(response => {
+      this.handleDelete(obj);
+      this.setState(prevState => ({items: prevState.items.concat(response)}));
+    }).catch(err => {alert(err.message)});
+    this.handleDiscard();
   }
 
   handleDiscard = () => {
+    this.setState({ editObj: null });
     this.setState({ editTitle: "" });
     this.setState({ editBody: "" });
     this.setState({ editing: false});
   }
 
   handleDelete = (obj) => {
-    console.log(obj);
-    this.setState({ editTitle: "" });
-    this.setState({ editBody: "" });
-    this.setState(prevState => ({
-      items: prevState.items.filter(el => el.id != obj.id)
-    }));
-    // API CALL
+    API.del(apiName, '/' + this.state.itemType + '/' + obj.hashKey).then(response => {
+      this.setState(prevState => ({
+        items: prevState.items.filter(el => el.hashKey !== obj.hashKey)
+      }));
+    }).catch(err => {alert(err.message)});
   }
 
   handleSwitchUser = (user) => {
-    if (user == 1) {
-      this.setState({ itemType: 'Resume' })
-    } else if (user == 2) {
-      this.setState({ itemType: 'Job' })
+    let newType = this.state.itemType;
+    if (user === 1) {
+      newType = 'Resume';
+    } else if (user === 2) {
+      newType = 'Job';
     }
+    this.setState({ itemType: newType })
+    this.updateItems(newType);
     this.handleCloseMenu();
   }
 
@@ -233,13 +228,13 @@ class App extends Component {
   makeCard = (obj) => {
     const { classes } = this.props;
     return (
-      <Card className={classes.card} id={obj.id}>
+      <Card className={classes.card} disabled={obj.disabled}>
         <CardActionArea onClick={() => this.handleEdit(obj)}>
           <CardContent>
-            <Typography gutterBottom variant="h5" component="h2">
+            <Typography gutterBottom variant="h5">
               {obj.title}
             </Typography>
-            <Typography component="p" >
+            <Typography variant="inherit" >
               {obj.body}
             </Typography>
           </CardContent>
@@ -250,7 +245,6 @@ class App extends Component {
             color="secondary"
             aria-label="Edit"
             className={classes.button}
-            value={obj.id}
             onClick={() => this.handleEdit(obj)}
           >
             <EditIcon />
@@ -269,9 +263,8 @@ class App extends Component {
 
   render() {
     const { classes } = this.props;
-    const { anchorEl, drawer } = this.state;
+    const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
-
     const list = (
       <div>
         <List>
@@ -296,12 +289,6 @@ class App extends Component {
 
     return (
       <div className={classes.root}>
-        <head>
-          <meta
-            name="viewport"
-            content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"
-          />
-        </head>
         <AppBar position="fixed" className={classes.appBar}>
           <Toolbar>
             <IconButton
@@ -356,12 +343,12 @@ class App extends Component {
             {list}
           </div>
         </Drawer>
-        <Grid cellHeight={'auto'} className={classes.gridList}>
+        <Grid className={classes.gridList}>
           <Typography variant="h5" component="h2" className={classes.paper}>
             Your {this.state.itemType}s
           </Typography>
-          {this.state.items.map(item => (
-            <Paper className={classes.paper} elevation={0}>
+          {this.state.items.map((item, i) => (
+            <Paper key={i} className={classes.paper} elevation={0}>
               {this.makeCard(item)}
             </Paper>
           ))}
@@ -382,7 +369,7 @@ class App extends Component {
             <TextField
               id="editTitle"
               label="Title"
-              rowsMax="1"
+              fullWidth={true}
               value={this.state.editTitle}
               onChange={this.handleChange('editTitle')}
               className={classes.dialogField}
@@ -392,8 +379,9 @@ class App extends Component {
             <TextField
               id="editBody"
               label="Body"
-              multiline
+              multiline={true}
               rowsMax="100"
+              fullWidth={true}
               value={this.state.editBody}
               onChange={this.handleChange('editBody')}
               className={classes.dialogField}
