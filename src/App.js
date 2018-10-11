@@ -228,12 +228,10 @@ class App extends Component {
     // API CALL
     let params = {body: obj};
     API.put(apiName, '/' + this.state.itemType + '/' + this.state.username, params).then(response => {
-      this.loading(false);
-      let persistant = this.state.items.filter(el => el.hashKey === response.hashKey);
-      if (this.state.items.includes(persistant)) {
-        alert(JSON.stringify(response));
+      if (obj.hashKey !== response.hashKey) {
         this.setState(prevState => ({items: prevState.items.concat(response)}));
       }
+      this.loading(false);
     }).catch(err => {
       alert(err.message);
       this.loading(false);
