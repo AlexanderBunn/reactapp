@@ -62,6 +62,9 @@ import ThumbDownIcon from '@material-ui/icons/ThumbDown';
 import Star from '@material-ui/icons/Star';
 import StarBorder from '@material-ui/icons/StarBorder';
 
+// LOADING DIALOG
+import CircularProgress from '@material-ui/core/CircularProgress';
+
 // AMPLIFY AUTHENICATOR
 import { ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignIn, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
 
@@ -137,6 +140,7 @@ class App extends Component {
     this.state = {
       username: Auth.user.username,
       itemType: 'Resume',
+      loading: true,
       anchorEl: null,
       drawer: false,
       editing: false,
@@ -144,18 +148,41 @@ class App extends Component {
       editTitle: "",
       editBody: "",
       matching: false,
-      matchObj: null,
-      matchTitle: "Match Title",
-      matchBody: "This is the match body.",
-      rating: true,
+      matchingTarget: null,
+      matchingResponse: null,
+      rating: false,
       items: [],
     };
     this.updateItems(this.state.itemType);
+    // this.updateMatch();
+  }
+  loading = (bool) => {
+    this.setState({ loading: bool });
   }
   updateItems = (newType) => {
+    this.loading(true);
     API.get(apiName, '/' + newType + '/' + this.state.username).then(response => {
-      this.setState({items: response.Items})
-    }).catch(err => {alert(err.message)});
+      this.setState({items: response.Items});
+      this.loading(false);
+    }).catch(err => {
+      alert(err.message);
+      this.loading(false);
+    });
+  }
+  getMatch = (obj) => {
+    this.loading(true);
+    let target = (obj === null) ? this.state.matchingTarget : obj;
+    let params = {
+      body: {},
+    };
+    API.post(apiName, '/' + this.state.itemType + '/Search', params).then(response => {
+      this.setState({ matchingResponse: response });
+      this.loading(false);
+    }).catch(err => {
+      this.loading(false);
+      this.handleShowMatch(false);
+      alert(err.message);
+    });
   }
   handleChange = name => event => {
     this.setState({
@@ -181,31 +208,55 @@ class App extends Component {
     this.setState({ editBody: obj.body });
     this.setState({ editing: true });
   }
+  handleStartMatch = (obj) => {
+    this.setState({ matchingTarget: obj });
+    this.getMatch(obj);
+  }
+  handleShowMatch = (bool) => {
+    this.setState({ matching: bool });
+    if (bool === false) {
+      this.setState({ matchingTarget: null });
+      this.setState({ matchingResponse: null });
+    }
+  }
   // ADD VALIDATE FORM
   handleSave = () => {
+    this.loading(true);
     let obj = this.state.editObj;
     obj.title = this.state.editTitle;
     obj.body = this.state.editBody;
     // API CALL
     let params = {body: obj};
     API.put(apiName, '/' + this.state.itemType + '/' + this.state.username, params).then(response => {
-      this.handleDelete(obj);
-      this.setState(prevState => ({items: prevState.items.concat(response)}));
-    }).catch(err => {alert(err.message)});
+      this.loading(false);
+      let persistant = this.state.items.filter(el => el.hashKey === response.hashKey);
+      if (this.state.items.includes(persistant)) {
+        alert(JSON.stringify(response));
+        this.setState(prevState => ({items: prevState.items.concat(response)}));
+      }
+    }).catch(err => {
+      alert(err.message);
+      this.loading(false);
+    });
     this.handleDiscard();
   }
   handleDiscard = () => {
     this.setState({ editObj: null });
     this.setState({ editTitle: "" });
     this.setState({ editBody: "" });
-    this.setState({ editing: false});
+    this.setState({ editing: false });
   }
   handleDelete = (obj) => {
+    this.loading(true);
     API.del(apiName, '/' + this.state.itemType + '/' + obj.hashKey).then(response => {
       this.setState(prevState => ({
         items: prevState.items.filter(el => el.hashKey !== obj.hashKey)
       }));
-    }).catch(err => {alert(err.message)});
+      this.loading(false);
+    }).catch(err => {
+      alert(err.message);
+      this.loading(false);
+    });
   }
   handleSwitchUser = (user) => {
     let newType = this.state.itemType;
@@ -247,7 +298,13 @@ class App extends Component {
           >
             <EditIcon />
           </Button>
-          <Button variant="extendedFab" color="primary" aria-label="Delete" className={classes.button}>
+          <Button
+            variant="extendedFab"
+            color="primary"
+            aria-label="Delete"
+            className={classes.button}
+            onClick={() => this.handleStartMatch(obj)}
+          >
             <NavigationIcon className={classes.extendedIcon} />
             Find Matches
           </Button>
@@ -322,7 +379,7 @@ class App extends Component {
                 open={open}
                 onClose={this.handleCloseMenu}
                >
-               <MenuItem onClick={() => this.handleSwitchUser(1)}>Job-seeker</MenuItem>
+               <MenuItem onClick={() => this.handleSwitchUser(1)}>Candidate</MenuItem>
                <MenuItem onClick={() => this.handleSwitchUser(2)}>Employer</MenuItem>
                <MenuItem onClick={this.handleSignOut}>Sign out</MenuItem>
              </Menu>
@@ -342,7 +399,7 @@ class App extends Component {
         </Drawer>
         <Grid className={classes.gridList}>
           <Typography variant="h5" component="h2" className={classes.paper}>
-            Your {this.state.itemType}s
+            Your {this.state.itemType} Posts
           </Typography>
           {this.state.items.map((item, i) => (
             <Paper key={i} className={classes.paper} elevation={0}>
@@ -353,8 +410,7 @@ class App extends Component {
         <div className={classes.addButtonContainer}>
           <Button variant="fab" color='secondary' onClick={this.handleNew()} className={classes.addButton}><AddIcon /></Button>
         </div>
-        <Dialog
-          open={this.state.editing}
+        <Dialog open={this.state.editing}
           onClose={this.handleDiscard}
           aria-labelledby="form-dialog-title"
           fullWidth={true}
@@ -395,11 +451,11 @@ class App extends Component {
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog
-          open={this.state.matching}
+        <Dialog open={this.state.matching}
           aria-labelledby="match-dialog-title"
           fullWidth={true}
           maxWidth={'md'}
+          onClose={() => this.handleShowMatch(false)}
           >
           <DialogTitle id="match-dialog-title">Find Matches</DialogTitle>
           <DialogContent>
@@ -418,8 +474,7 @@ class App extends Component {
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog
-          open={this.state.rating}
+        <Dialog open={this.state.rating}
           aria-labelledby="match-dialog-title"
           fullWidth={true}
           maxWidth={'md'}
@@ -446,6 +501,13 @@ class App extends Component {
           <DialogActions>
 
           </DialogActions>
+        </Dialog>
+        <Dialog open={this.state.loading}
+          maxWidth={'xs'}
+          >
+          <DialogContent style={{textAlign: 'center'}}>
+          <CircularProgress color="primary" />
+          </DialogContent>
         </Dialog>
       </div>
     );

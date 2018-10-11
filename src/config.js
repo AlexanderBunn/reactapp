@@ -9,5 +9,5 @@ export default {
     USER_POOL_ID: "ap-southeast-2_9p8Tl00qj",
     APP_CLIENT_ID: "34oe6g68k70r6o1hhplsal1456",
     IDENTITY_POOL_ID: "ap-southeast-2:f47b0e65-9876-4dc8-8c34-a5975f78e2e6"
-  }
+  },
 };
