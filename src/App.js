@@ -59,8 +59,8 @@ import ThumbUpIcon from '@material-ui/icons/ThumbUp';
 import ThumbDownIcon from '@material-ui/icons/ThumbDown';
 
 // RATING DIALOG
-import Star from '@material-ui/icons/Star';
-import StarBorder from '@material-ui/icons/StarBorder';
+import Rating from './Rating';
+
 
 // LOADING DIALOG
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -134,6 +134,7 @@ const styles = theme => ({
 
 const apiName = config.apiGateway.NAME;
 
+// ADD CHECKS FOR ERRORS
 class App extends Component {
   constructor(props) {
     super(props);
@@ -173,7 +174,7 @@ class App extends Component {
     this.loading(true);
     let target = (obj === null) ? this.state.matchingTarget : obj;
     let search = [];
-    target.keyPhrases.map((key, i) => {
+    target.keyPhrases.forEach((key, i) => {
       let newSearch = {
         "common" : {
           "body" : {
@@ -231,6 +232,7 @@ class App extends Component {
   };
   handleNew = () => () => {
     let newObj = {};
+    newObj.itemType = this.state.itemType;
     this.handleEdit(newObj);
   }
   handleEdit = (obj) => {
@@ -248,7 +250,6 @@ class App extends Component {
     if (bool === false) {
       this.setState({ matchingTarget: null });
       this.setState({ matchingResponse: null });
-
     }
   }
   handleGoodMatch = () => {
@@ -258,8 +259,18 @@ class App extends Component {
     upDown.ratio = ((upDown.ratio * upDown.count) + 1 ) / (upDown.count + 1);
     upDown.count = upDown.count + 1;
     searchee.upDown = upDown;
-    searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.push(searcher.hashKey) : [searcher.hashKey];
-    this.handleSaveMatch(searchee);
+    // HAVE THEY MATCHED ME
+    if (searcher.potentialMatches && searcher.potentialMatches.includes(searchee.hashKey)) {
+      // THEY ARE NOW A FULL MATCH
+      searcher.potentialMatches.splice(searcher.potentialMatches.indexOf(searchee.hashKey), 1);
+      searcher.matches = searcher.matches ? searcher.matches.push(searchee.hashKey) : [searchee.hashKey];
+      searchee.matches = searchee.matches ? searchee.matches.push(searcher.hashKey) : [searcher.hashKey];
+    } else {
+      // THEY ARE NOW A POTENTIAL MATCH
+      searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.push(searcher.hashKey) : [searcher.hashKey];
+    }
+    this.setState({ matchingResponse: searchee});
+    this.handleShowRating(true);
   }
   handleBadMatch = () => {
     let searchee = this.state.matchingResponse;
@@ -267,28 +278,40 @@ class App extends Component {
     upDown.ratio = (upDown.ratio * upDown.count) / (upDown.count + 1);
     upDown.count = upDown.count + 1;
     searchee.upDown = upDown;
-    this.handleSaveMatch(searchee);
+    this.setState({ matchingResponse: searchee});
+    this.handleShowRating(true);
   }
-  handleSaveMatch = (searchee) => {
+  handleSaveMatch = () => {
     let searcher = this.state.matchingTarget;
+    let searchee = this.state.matchingTarget;
     searcher.seen = searcher.seen ? searcher.seen.push(searchee.hashKey) : searchee.hashKey;
     this.setState({ matchingTarget: searcher });
-    this.setState({ matchingResponse: searchee});
     this.handleSave(searcher);
+    this.handleSave(searchee);
+    this.handleShowRating(false);
+    this.getMatch();
+  }
+  handleShowRating = (bool) => {
+    this.setState({ rating: bool });
+  }
+  handleRating = (name, value) => {
+    let obj = this.state.matchingResponse;
+    obj[name] = value;
+    this.setState({ matchingResponse: obj });
   }
   handleSaveEdit = () => {
     let obj = this.state.editObj;
     obj.title = this.state.editTitle;
     obj.body = this.state.editBody;
     this.handleSave(obj);
-    this.handleDiscard();
+    this.handleDiscardEdit();
   }
   // ADD VALIDATE FORM
   handleSave = (obj) => {
     this.loading(true);
     // API CALL
     let params = {body: obj};
-    API.put(apiName, '/' + this.state.itemType + '/' + this.state.username, params).then(response => {
+    API.put(apiName, '/' + obj.itemType + '/' + this.state.username, params).then(response => {
       if (obj.hashKey !== response.hashKey) {
         this.setState(prevState => ({items: prevState.items.concat(response)}));
       }
@@ -298,7 +321,7 @@ class App extends Component {
       this.loading(false);
     });
   }
-  handleDiscard = () => {
+  handleDiscardEdit = () => {
     this.setState({ editObj: null });
     this.setState({ editTitle: "" });
     this.setState({ editBody: "" });
@@ -469,7 +492,7 @@ class App extends Component {
           <Button variant="fab" color='secondary' onClick={this.handleNew()} className={classes.addButton}><AddIcon /></Button>
         </div>
         <Dialog open={this.state.editing}
-          onClose={this.handleDiscard}
+          onClose={this.handleDiscardEdit}
           aria-labelledby="form-dialog-title"
           fullWidth={true}
           maxWidth={'md'}
@@ -499,7 +522,7 @@ class App extends Component {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.handleDiscard} color="secondary">
+            <Button onClick={this.handleDiscardEdit} color="secondary">
               Discard
             </Button>
             <Button onClick={this.handleSaveEdit} color="primary">
@@ -537,25 +560,13 @@ class App extends Component {
           >
           <DialogTitle id="match-dialog-title">Rating</DialogTitle>
           <DialogContent style={{textAlign: 'center'}}>
-            <Typography variant="inherit"> Rating: </Typography>
-            <Button onClick={this.handleBadMatch} >
-              <Star />
-            </Button>
-            <Button onClick={this.handleBadMatch} >
-              <Star />
-            </Button>
-            <Button onClick={this.handleBadMatch} >
-              <Star />
-            </Button>
-            <Button onClick={this.handleBadMatch} >
-              <Star />
-            </Button>
-            <Button onClick={this.handleBadMatch} >
-              <Star />
-            </Button>
+            <Typography variant="inherit" > Qualifications </Typography>
+            <Rating name="qualifications" onChange={this.handleRating.bind(this)} />
           </DialogContent>
           <DialogActions>
-
+          <Button onClick={this.handleSaveMatch} color="primary">
+            Submit
+          </Button>
           </DialogActions>
         </Dialog>
         <Dialog open={this.state.loading}
