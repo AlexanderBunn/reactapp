@@ -4,7 +4,7 @@ import './App.css';
 
 // MATERIAL UI
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
 // APP BAR
 import AppBar from '@material-ui/core/AppBar';
@@ -74,6 +74,13 @@ import aws_exports from './exports';
 import config from './config'
 Amplify.configure(aws_exports);
 
+const theme = createMuiTheme({
+  typography: {
+    useNextVariants: true,
+    suppressDeprecationWarnings: true
+  }
+});
+
 const styles = theme => ({
   root: {
     flexGrow: 1,
@@ -130,6 +137,8 @@ const styles = theme => ({
   addButton: {
     pointerEvents: 'all',
   },
+  rating: {
+  },
 });
 
 const apiName = config.apiGateway.NAME;
@@ -139,9 +148,10 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      suspendLoad: true,
       username: Auth.user.username,
       itemType: 'Resume',
-      loading: true,
+      loading: false,
       anchorEl: null,
       drawer: false,
       editing: false,
@@ -150,8 +160,8 @@ class App extends Component {
       editBody: "",
       matching: false,
       matchingTarget: null,
-      matchingResponse: null,
-      rating: false,
+      matchingResponse: {},
+      rating: true,
       items: [],
     };
     this.updateItems(this.state.itemType);
@@ -161,14 +171,16 @@ class App extends Component {
     this.setState({ loading: bool });
   }
   updateItems = (newType) => {
-    this.loading(true);
-    API.get(apiName, '/' + newType + '/' + this.state.username).then(response => {
-      this.setState({items: response.Items});
-      this.loading(false);
-    }).catch(err => {
-      alert(err.message);
-      this.loading(false);
-    });
+    if (!this.state.suspendLoad) {
+      this.loading(true);
+      API.get(apiName, '/' + newType + '/' + this.state.username).then(response => {
+        this.setState({items: response.Items});
+        this.loading(false);
+      }).catch(err => {
+        alert(err.message);
+        this.loading(false);
+      });
+    }
   }
   getMatch = (obj) => {
     this.loading(true);
@@ -283,11 +295,11 @@ class App extends Component {
   }
   handleSaveMatch = () => {
     let searcher = this.state.matchingTarget;
-    let searchee = this.state.matchingTarget;
+    let searchee = this.state.matchingResponse;
     searcher.seen = searcher.seen ? searcher.seen.push(searchee.hashKey) : searchee.hashKey;
     this.setState({ matchingTarget: searcher });
-    this.handleSave(searcher);
-    this.handleSave(searchee);
+    // this.handleSave(searcher);
+    // this.handleSave(searchee);
     this.handleShowRating(false);
     this.getMatch();
   }
@@ -295,9 +307,12 @@ class App extends Component {
     this.setState({ rating: bool });
   }
   handleRating = (name, value) => {
-    let obj = this.state.matchingResponse;
-    obj[name] = value;
-    this.setState({ matchingResponse: obj });
+    let searchee = this.state.matchingResponse;
+    let rating = searchee[name] ? searchee[name] : { "ratio" : 0, "count" : 0};
+    rating.ratio = ((rating.ratio * rating.count) + value ) / (rating.count + 1);
+    rating.count = rating.count + 1;
+    searchee[name] = rating;
+    this.setState({ matchingResponse: searchee });
   }
   handleSaveEdit = () => {
     let obj = this.state.editObj;
@@ -340,14 +355,14 @@ class App extends Component {
     });
   }
   handleSwitchUser = (user) => {
+    this.setState({ itemType: newType })
+    this.updateItems(newType);
     let newType = this.state.itemType;
     if (user === 1) {
       newType = 'Resume';
     } else if (user === 2) {
       newType = 'Job';
     }
-    this.setState({ itemType: newType })
-    this.updateItems(newType);
     this.handleCloseMenu();
   }
   handleSignOut = () => {
@@ -423,160 +438,166 @@ class App extends Component {
     );
 
     return (
-      <div className={classes.root}>
-        <AppBar position="fixed" className={classes.appBar}>
-          <Toolbar>
-            <IconButton
-              className={classes.menuButton}
-              color="inherit"
-              aria-label="Menu"
-              onClick={this.state.drawer ? this.toggleDrawer(false) : this.toggleDrawer(true)}
-            >
-              {this.state.drawer ? <CloseIcon /> :  <MenuIcon />}
-            </IconButton>
-            <Typography variant="h6" color="inherit" style={{ flexGrow: 1 }}>
-              Dashboard
-            </Typography>
-            <div>
+      <MuiThemeProvider theme={theme}>
+        <div className={classes.root}>
+          <AppBar position="fixed" className={classes.appBar}>
+            <Toolbar>
               <IconButton
-                aria-owns={open ? 'menu-appbar' : null}
-                aria-haspopup="true"
-                onClick={this.handleOpenMenu}
+                className={classes.menuButton}
                 color="inherit"
+                aria-label="Menu"
+                onClick={this.state.drawer ? this.toggleDrawer(false) : this.toggleDrawer(true)}
               >
-                <AccountCircle />
+                {this.state.drawer ? <CloseIcon /> :  <MenuIcon />}
               </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={open}
-                onClose={this.handleCloseMenu}
-               >
-               <MenuItem onClick={() => this.handleSwitchUser(1)}>Candidate</MenuItem>
-               <MenuItem onClick={() => this.handleSwitchUser(2)}>Employer</MenuItem>
-               <MenuItem onClick={this.handleSignOut}>Sign out</MenuItem>
-             </Menu>
-           </div>
-         </Toolbar>
-        </AppBar>
-        <Drawer open={this.state.drawer} onClose={this.toggleDrawer(false)} className={classes.drawerPaper}>
-          <div
-            tabIndex={0}
-            role="button"
-            onClick={this.toggleDrawer(false)}
-            onKeyDown={this.toggleDrawer(false)}
-            className={classes.drawerPaper}
-          >
-            {list}
-          </div>
-        </Drawer>
-        <Grid className={classes.gridList}>
-          <Typography variant="h5" component="h2" className={classes.paper}>
-            Your {this.state.itemType} Posts
-          </Typography>
-          {this.state.items.map((item, i) => (
-            <Paper key={i} className={classes.paper} elevation={0}>
-              {this.makeCard(item)}
-            </Paper>
-          ))}
-        </Grid>
-        <div className={classes.addButtonContainer}>
-          <Button variant="fab" color='secondary' onClick={this.handleNew()} className={classes.addButton}><AddIcon /></Button>
-        </div>
-        <Dialog open={this.state.editing}
-          onClose={this.handleDiscardEdit}
-          aria-labelledby="form-dialog-title"
-          fullWidth={true}
-          maxWidth={'md'}
-          scroll={'body'}
-          >
-          <DialogTitle id="form-dialog-title">Edit {this.state.itemType}</DialogTitle>
-          <DialogContent>
-            <TextField
-              label="Title"
-              fullWidth={true}
-              value={this.state.editTitle}
-              onChange={this.handleChange('editTitle')}
-              className={classes.dialogField}
-              margin="normal"
-              variant="outlined"
-            />
-            <TextField
-              label="Body"
-              multiline={true}
-              rowsMax="100"
-              fullWidth={true}
-              value={this.state.editBody}
-              onChange={this.handleChange('editBody')}
-              className={classes.dialogField}
-              margin="normal"
-              variant="outlined"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={this.handleDiscardEdit} color="secondary">
-              Discard
-            </Button>
-            <Button onClick={this.handleSaveEdit} color="primary">
-              Save
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={this.state.matching}
-          aria-labelledby="match-dialog-title"
-          fullWidth={true}
-          maxWidth={'md'}
-          onClose={() => this.handleShowMatch(false)}
-          >
-          <DialogTitle id="match-dialog-title">Find Matches</DialogTitle>
-          <DialogContent>
-            <Paper className={classes.paper} elevation={0}>
-              <Typography variant="inherit" >
-                {(this.state.matchingResponse) ? this.state.matchingResponse.body : ""}
+              <Typography variant="h6" color="inherit" style={{ flexGrow: 1 }}>
+                Dashboard
               </Typography>
+              <div>
+                <IconButton
+                  aria-owns={open ? 'menu-appbar' : null}
+                  aria-haspopup="true"
+                  onClick={this.handleOpenMenu}
+                  color="inherit"
+                >
+                  <AccountCircle />
+                </IconButton>
+                <Menu
+                  id="menu-appbar"
+                  anchorEl={anchorEl}
+                  anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                  open={open}
+                  onClose={this.handleCloseMenu}
+                 >
+                 <MenuItem onClick={() => this.handleSwitchUser(1)}>Candidate</MenuItem>
+                 <MenuItem onClick={() => this.handleSwitchUser(2)}>Employer</MenuItem>
+                 <MenuItem onClick={this.handleSignOut}>Sign out</MenuItem>
+               </Menu>
+             </div>
+           </Toolbar>
+          </AppBar>
+          <Drawer open={this.state.drawer} onClose={this.toggleDrawer(false)} className={classes.drawerPaper}>
+            <div
+              tabIndex={0}
+              role="button"
+              onClick={this.toggleDrawer(false)}
+              onKeyDown={this.toggleDrawer(false)}
+              className={classes.drawerPaper}
+            >
+              {list}
+            </div>
+          </Drawer>
+          <Grid className={classes.gridList}>
+            <Typography variant="h5" component="h2" className={classes.paper}>
+              Your {this.state.itemType} Posts
+            </Typography>
+            {this.state.items.map((item, i) => (
+              <Paper key={i} className={classes.paper} elevation={0}>
+                {this.makeCard(item)}
               </Paper>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={this.handleBadMatch} color="secondary">
-              <ThumbDownIcon />
+            ))}
+          </Grid>
+          <div className={classes.addButtonContainer}>
+            <Button variant="fab" color='secondary' onClick={this.handleNew()} className={classes.addButton}><AddIcon /></Button>
+          </div>
+          <Dialog open={this.state.editing}
+            onClose={this.handleDiscardEdit}
+            aria-labelledby="form-dialog-title"
+            fullWidth={true}
+            maxWidth={'md'}
+            scroll={'body'}
+            >
+            <DialogTitle id="form-dialog-title">Edit {this.state.itemType}</DialogTitle>
+            <DialogContent>
+              <TextField
+                label="Title"
+                fullWidth={true}
+                value={this.state.editTitle}
+                onChange={this.handleChange('editTitle')}
+                className={classes.dialogField}
+                margin="normal"
+                variant="outlined"
+              />
+              <TextField
+                label="Body"
+                multiline={true}
+                rowsMax="100"
+                fullWidth={true}
+                value={this.state.editBody}
+                onChange={this.handleChange('editBody')}
+                className={classes.dialogField}
+                margin="normal"
+                variant="outlined"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={this.handleDiscardEdit} color="secondary">
+                Discard
+              </Button>
+              <Button onClick={this.handleSaveEdit} color="primary">
+                Save
+              </Button>
+            </DialogActions>
+          </Dialog>
+          <Dialog open={this.state.matching}
+            aria-labelledby="match-dialog-title"
+            fullWidth={true}
+            maxWidth={'md'}
+            scroll={'body'}
+            onClose={() => this.handleShowMatch(false)}
+            >
+            <DialogTitle id="match-dialog-title">Find Matches</DialogTitle>
+            <DialogContent>
+              <Paper className={classes.paper} elevation={0}>
+                <Typography variant="inherit" >
+                  {(this.state.matchingResponse) ? this.state.matchingResponse.body : ""}
+                </Typography>
+                </Paper>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={this.handleBadMatch} color="secondary">
+                <ThumbDownIcon />
+              </Button>
+              <Button onClick={this.handleGoodMatch} color="primary">
+                <ThumbUpIcon />
+              </Button>
+            </DialogActions>
+          </Dialog>
+          <Dialog open={this.state.rating}
+            aria-labelledby="match-dialog-title"
+            maxWidth={'sm'}
+            scroll={'body'}
+            >
+            <DialogTitle id="match-dialog-title">Rating</DialogTitle>
+            <DialogContent>
+              <Rating label="Communication" name="communication" onChange={this.handleRating.bind(this)} className={classes.rating} />
+              <Rating label="Hard Skills" name="hardSkills" onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating label="Soft Skills" name="softSkills" onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating label="Certifications" name="certifications" onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating label="Qualifications" name="qualifications" onChange={this.handleRating.bind(this)} className={classes.rating}/>
+            </DialogContent>
+            <DialogActions>
+            <Button onClick={this.handleSaveMatch} color="primary">
+              Submit
             </Button>
-            <Button onClick={this.handleGoodMatch} color="primary">
-              <ThumbUpIcon />
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={this.state.rating}
-          aria-labelledby="match-dialog-title"
-          fullWidth={true}
-          maxWidth={'md'}
-          >
-          <DialogTitle id="match-dialog-title">Rating</DialogTitle>
-          <DialogContent style={{textAlign: 'center'}}>
-            <Typography variant="inherit" > Qualifications </Typography>
-            <Rating name="qualifications" onChange={this.handleRating.bind(this)} />
-          </DialogContent>
-          <DialogActions>
-          <Button onClick={this.handleSaveMatch} color="primary">
-            Submit
-          </Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={this.state.loading}
-          maxWidth={'xs'}
-          >
-          <DialogContent style={{textAlign: 'center'}}>
-          <CircularProgress color="primary" />
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogActions>
+          </Dialog>
+          <Dialog open={this.state.loading}
+            maxWidth={'xs'}
+            >
+            <DialogContent style={{textAlign: 'center'}}>
+            <CircularProgress color="primary" />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </MuiThemeProvider>
     );
   }
 }

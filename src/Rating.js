@@ -5,18 +5,15 @@ import orange from '@material-ui/core/colors/orange';
 import Star from '@material-ui/icons/Star';
 import StarBorder from '@material-ui/icons/StarBorder';
 import Checkbox from '@material-ui/core/Checkbox';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControl from '@material-ui/core/FormControl';
+import Typography from '@material-ui/core/Typography';
+import Paper from '@material-ui/core/Paper';
+import Grid from '@material-ui/core/Grid';
 
 const styles = theme => ({
   rating: {
     color: orange[500],
+    flex: 1,
   },
-  formControl: {
-    width: 'auto',
-    textAlign: 'center',
-  }
 });
 
 class Rating extends Component {
@@ -34,7 +31,7 @@ class Rating extends Component {
       rating: newRating,
       bkpRating: newRating
     });
-    this.props.onChange(this.props.name, newRating);
+    this.props.onChange(this.props.name, newRating + 1);
   }
 
   openStarView(newRating) {
@@ -55,38 +52,27 @@ class Rating extends Component {
         bool = true;
       }
       stars.push(
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={bool}
-              onClick={this.rate.bind(this, i)}
-              onMouseOver={this.openStarView.bind(this, i)}
-              onMouseOut={this.closeStarView.bind(this, i)}
-              icon={
-                <StarBorder
-                  className={classes.rating}
-                />
-              }
-              checkedIcon={
-                <Star
-                  className={classes.rating}
-                />
-              }
-            />
-          }
+        <Checkbox
+          key={"star-" + i.toString()}
+          checked={bool}
+          onClick={this.rate.bind(this, i)}
+          onMouseOver={this.openStarView.bind(this, i)}
+          onMouseOut={this.closeStarView.bind(this, i)}
+          icon={ <StarBorder className={classes.rating} /> }
+          checkedIcon={ <Star className={classes.rating} /> }
         />
       );
     }
     return (
-      <FormControl className={classes.formControl}>
-        <FormGroup
-          aria-label="relevance"
-          name="relevance"
-          row
-        >
+       <Grid container spacing={8} alignItems="center">
+        <Grid item xs={1}></Grid>
+        <Grid item xs={5}>
+          <Typography variant="h6" color="inherit" >{this.props.label}</Typography>
+        </Grid>
+        <Grid item xs={6}>
           {stars}
-          </FormGroup>
-        </FormControl>
+        </Grid>
+      </Grid>
     );
   }
 }
