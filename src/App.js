@@ -172,12 +172,43 @@ class App extends Component {
   getMatch = (obj) => {
     this.loading(true);
     let target = (obj === null) ? this.state.matchingTarget : obj;
+    let search = [];
+    target.keyPhrases.map((key, i) => {
+      let newSearch = {
+        "common" : {
+          "body" : {
+          }
+        }
+      };
+      let body = newSearch.common.body;
+      body['cutoff_frequency'] = 0.001;
+      body['boost'] = key.Score * 10;
+      body['query'] = key.Text;
+      search.push(newSearch)
+    });
     let params = {
-      body: {},
+      "body" : {
+        "size" : 1,
+        "query": {
+          "bool" : {
+            "should" : search,
+            "minimum_should_match" : 1,
+            "boost" : 1.0
+          }
+        }
+      }
     };
+    if (target.potentialMatches) {
+      params.body.query.bool["must"] = { "terms" : {"_id": target.potentialMatches } };
+    }
+    if (target.seen) {
+      params.body.query.bool["must_not"] = { "terms" : {"_id": target.seen } };
+    }
     API.post(apiName, '/' + this.state.itemType + '/Search', params).then(response => {
-      this.setState({ matchingResponse: response });
+      let matchObj = response['hits']['hits'][0]['_source'];
+      this.setState({ matchingResponse: matchObj });
       this.loading(false);
+      this.handleShowMatch(true);
     }).catch(err => {
       this.loading(false);
       this.handleShowMatch(false);
@@ -217,14 +248,44 @@ class App extends Component {
     if (bool === false) {
       this.setState({ matchingTarget: null });
       this.setState({ matchingResponse: null });
+
     }
   }
-  // ADD VALIDATE FORM
-  handleSave = () => {
-    this.loading(true);
+  handleGoodMatch = () => {
+    let searcher = this.state.matchingTarget;
+    let searchee = this.state.matchingResponse;
+    let upDown = searchee.upDown ? searchee.upDown : { "ratio" : 1, "count" : 1};
+    upDown.ratio = ((upDown.ratio * upDown.count) + 1 ) / (upDown.count + 1);
+    upDown.count = upDown.count + 1;
+    searchee.upDown = upDown;
+    searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.push(searcher.hashKey) : [searcher.hashKey];
+    this.handleSaveMatch(searchee);
+  }
+  handleBadMatch = () => {
+    let searchee = this.state.matchingResponse;
+    let upDown = searchee.upDown ? searchee.upDown : { "ratio" : 1, "count" : 1};
+    upDown.ratio = (upDown.ratio * upDown.count) / (upDown.count + 1);
+    upDown.count = upDown.count + 1;
+    searchee.upDown = upDown;
+    this.handleSaveMatch(searchee);
+  }
+  handleSaveMatch = (searchee) => {
+    let searcher = this.state.matchingTarget;
+    searcher.seen = searcher.seen ? searcher.seen.push(searchee.hashKey) : searchee.hashKey;
+    this.setState({ matchingTarget: searcher });
+    this.setState({ matchingResponse: searchee});
+    this.handleSave(searcher);
+  }
+  handleSaveEdit = () => {
     let obj = this.state.editObj;
     obj.title = this.state.editTitle;
     obj.body = this.state.editBody;
+    this.handleSave(obj);
+    this.handleDiscard();
+  }
+  // ADD VALIDATE FORM
+  handleSave = (obj) => {
+    this.loading(true);
     // API CALL
     let params = {body: obj};
     API.put(apiName, '/' + this.state.itemType + '/' + this.state.username, params).then(response => {
@@ -236,7 +297,6 @@ class App extends Component {
       alert(err.message);
       this.loading(false);
     });
-    this.handleDiscard();
   }
   handleDiscard = () => {
     this.setState({ editObj: null });
@@ -418,7 +478,6 @@ class App extends Component {
           <DialogTitle id="form-dialog-title">Edit {this.state.itemType}</DialogTitle>
           <DialogContent>
             <TextField
-              id="editTitle"
               label="Title"
               fullWidth={true}
               value={this.state.editTitle}
@@ -428,7 +487,6 @@ class App extends Component {
               variant="outlined"
             />
             <TextField
-              id="editBody"
               label="Body"
               multiline={true}
               rowsMax="100"
@@ -444,7 +502,7 @@ class App extends Component {
             <Button onClick={this.handleDiscard} color="secondary">
               Discard
             </Button>
-            <Button onClick={this.handleSave} color="primary">
+            <Button onClick={this.handleSaveEdit} color="primary">
               Save
             </Button>
           </DialogActions>
@@ -459,7 +517,7 @@ class App extends Component {
           <DialogContent>
             <Paper className={classes.paper} elevation={0}>
               <Typography variant="inherit" >
-                {this.state.matchBody}
+                {(this.state.matchingResponse) ? this.state.matchingResponse.body : ""}
               </Typography>
               </Paper>
           </DialogContent>
