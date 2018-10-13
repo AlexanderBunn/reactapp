@@ -218,16 +218,16 @@ class App extends Component {
       params.body.query.bool["must_not"] = { "terms" : {"_id": target.seen } };
     }
     API.post(apiName, '/' + this.state.itemType + '/Search', params).then(response => {
-      if (response['hits']) {
-        let matchObj = response['hits']['hits'][0]['_source'];
-        this.setState({ matchingResponse: matchObj });
-        this.loading(false);
-        this.handleShowMatch(true);
-      } else {
+      if (response['error']) {
         this.loading(false);
         this.handleShowMatch(false);
         alert("No matches");
         console.log(response);
+      } else {
+        let matchObj = response['hits']['hits'][0]['_source'];
+        this.setState({ matchingResponse: matchObj });
+        this.loading(false);
+        this.handleShowMatch(true);
       }
     }).catch(err => {
       this.loading(false);
