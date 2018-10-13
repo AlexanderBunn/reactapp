@@ -381,13 +381,6 @@ class App extends Component {
       .then(() => {this.props.onStateChange('signedOut', null)})
       .catch(err => {alert('err: ', err.message)})
   }
-  getFormattedText = (str) => {
-    let out = "";
-    str.split("\n").map((i, key) => {
-      out += <Typography key={key}>{i}</Typography>;
-    })
-    return out;
-  }
   makeCard = (obj) => {
     const { classes } = this.props;
     return (
@@ -398,7 +391,9 @@ class App extends Component {
               {obj.title}
             </Typography>
             <Typography variant="body2">
-              {this.getFormattedText(obj.body)}
+              {obj.body.split("\n").map((i, key) => {
+                    return <Typography key={key}>{i}</Typography>;
+              })}
             </Typography>
           </CardContent>
         </CardActionArea>
@@ -574,8 +569,10 @@ class App extends Component {
             <DialogTitle id="match-dialog-title">Find Matches</DialogTitle>
             <DialogContent>
               <Paper className={classes.paper} elevation={0}>
-                <Typography variant="inherit" >
-                  {this.getFormattedText(this.state.matchingResponse.body ? this.state.matchingResponse.body : " ")}
+                <Typography variant="body2" >
+                  {(this.state.matchingResponse && this.state.matchingResponse.body ? this.state.matchingResponse.body : " ").split("\n").map((i, key) => {
+                        return <Typography key={key}>{i}</Typography>;
+                  })}
                 </Typography>
                 </Paper>
             </DialogContent>
