@@ -646,6 +646,7 @@ class App extends Component {
               <Rating value={this.state.feedback[ratingNames[this.state.itemType][2]] ? this.state.feedback[ratingNames[this.state.itemType][2]].avg : 2} name={ratingNames[this.state.itemType][2]} disabled={true} className={classes.rating}/>
               <Rating value={this.state.feedback[ratingNames[this.state.itemType][3]] ? this.state.feedback[ratingNames[this.state.itemType][3]].avg : 2} name={ratingNames[this.state.itemType][3]} disabled={true} className={classes.rating}/>
               <Rating value={this.state.feedback[ratingNames[this.state.itemType][4]] ? this.state.feedback[ratingNames[this.state.itemType][4]].avg : 2} name={ratingNames[this.state.itemType][4]} disabled={true} className={classes.rating}/>
+              <Rating value={this.state.feedback.upDown ? Math.min(Math.max(Math.round(this.state.feedback.upDown.up / this.state.feedback.upDown.down), 0), 5) : 2} name={<ThumbsUpDown className={classes.extendedIcon} />} disabled={true} className={classes.rating}/>
             </DialogContent>
             <DialogActions>
             </DialogActions>
