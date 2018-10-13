@@ -218,7 +218,7 @@ class App extends Component {
       params.body.query.bool["must_not"] = { "terms" : {"_id": target.seen } };
     }
     API.post(apiName, '/' + this.state.itemType + '/Search', params).then(response => {
-      if (response['error']) {
+      if (response['error'] || response['hits']['hits'].length === 0) {
         this.loading(false);
         this.handleShowMatch(false);
         alert("No matches");
