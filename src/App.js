@@ -281,11 +281,11 @@ class App extends Component {
     if (searcher.potentialMatches && searcher.potentialMatches.includes(searchee.hashKey)) {
       // THEY ARE NOW A FULL MATCH
       searcher.potentialMatches.splice(searcher.potentialMatches.indexOf(searchee.hashKey), 1);
-      searcher.matches = searcher.matches ? searcher.matches.push(searchee.hashKey) : [searchee.hashKey];
-      searchee.matches = searchee.matches ? searchee.matches.push(searcher.hashKey) : [searcher.hashKey];
+      searcher.matches = searcher.matches ? searcher.matches.concat(searchee.hashKey) : [searchee.hashKey];
+      searchee.matches = searchee.matches ? searchee.matches.concat(searcher.hashKey) : [searcher.hashKey];
     } else {
       // THEY ARE NOW A POTENTIAL MATCH
-      searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.push(searcher.hashKey) : [searcher.hashKey];
+      searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.concat(searcher.hashKey) : [searcher.hashKey];
     }
     this.setState({ matchingResponse: searchee});
     this.handleShowRating(true);
