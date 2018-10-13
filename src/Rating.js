@@ -21,17 +21,19 @@ class Rating extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      rating: 0,
+      rating: this.props.value,
       bkpRating: 0,
     };
   }
 
   rate(newRating) {
-    this.setState({
-      rating: newRating,
-      bkpRating: newRating
-    });
-    this.props.onChange(this.props.name, newRating + 1);
+    if (!this.props.disabled) {
+      this.setState({
+        rating: newRating,
+        bkpRating: newRating
+      });
+      this.props.onChange(this.props.name, newRating + 1);
+    }
   }
 
   openStarView(newRating) {
@@ -54,6 +56,7 @@ class Rating extends Component {
       stars.push(
         <Checkbox
           key={"star-" + i.toString()}
+          disabled={this.props.disabled}
           checked={bool}
           onClick={this.rate.bind(this, i)}
           onMouseOver={this.openStarView.bind(this, i)}
@@ -67,7 +70,7 @@ class Rating extends Component {
        <Grid container spacing={8} alignItems="center">
         <Grid item xs={1}></Grid>
         <Grid item xs={5}>
-          <Typography variant="h6" color="inherit" >{this.props.label}</Typography>
+          <Typography variant="h6" color="inherit" >{this.props.name}</Typography>
         </Grid>
         <Grid item xs={6}>
           {stars}

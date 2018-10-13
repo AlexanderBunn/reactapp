@@ -37,6 +37,7 @@ import CardActionArea from '@material-ui/core/CardActionArea';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import Paper from '@material-ui/core/Paper'
+import green from '@material-ui/core/colors/green'
 
 // CARD ACTIONS
 import AddIcon from '@material-ui/icons/Add';
@@ -57,10 +58,10 @@ import TextField from '@material-ui/core/TextField';
 // MATCH DIALOG
 import ThumbUpIcon from '@material-ui/icons/ThumbUp';
 import ThumbDownIcon from '@material-ui/icons/ThumbDown';
+import ThumbsUpDown from '@material-ui/icons/ThumbsUpDown';
 
 // RATING DIALOG
 import Rating from './Rating';
-
 
 // LOADING DIALOG
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -143,6 +144,11 @@ const styles = theme => ({
 
 const apiName = config.apiGateway.NAME;
 
+const ratingNames = {
+  "Job" : ["Location", "Intrest", "Usefulness", "Rewarding", "Achievable"],
+  "Resume" : ["Communication Skills", "Soft Skills", "Hard Skills", "Certifications", "Qualifications"]
+};
+
 // ADD CHECKS FOR ERRORS
 class App extends Component {
   constructor(props) {
@@ -160,8 +166,11 @@ class App extends Component {
       editBody: "",
       matching: false,
       matchingTarget: null,
-      matchingResponse: {},
+      matchingResponse: null,
       rating: false,
+      feedback: false,
+      alert: false,
+      alertMsg: null,
       items: [],
     };
     this.updateItems(this.state.itemType);
@@ -177,7 +186,7 @@ class App extends Component {
         this.setState({items: response.Items});
         this.loading(false);
       }).catch(err => {
-        alert(err.message);
+        this.handleShowAlert(true, err.message);
         this.loading(false);
       });
     }
@@ -221,7 +230,7 @@ class App extends Component {
       if (response['error'] || response['hits']['hits'].length === 0) {
         this.loading(false);
         this.handleShowMatch(false);
-        alert("No matches");
+        this.handleShowAlert(true, "No matches");
         console.log(response);
       } else {
         let matchObj = response['hits']['hits'][0]['_source'];
@@ -232,7 +241,7 @@ class App extends Component {
     }).catch(err => {
       this.loading(false);
       this.handleShowMatch(false);
-      alert(err.message);
+      this.handleShowAlert(true, err.message);
     });
   }
   handleChange = name => event => {
@@ -252,6 +261,7 @@ class App extends Component {
   handleNew = () => () => {
     let newObj = {};
     newObj.itemType = this.state.itemType;
+    newObj.userName = this.state.userName;
     this.handleEdit(newObj);
   }
   handleEdit = (obj) => {
@@ -287,14 +297,20 @@ class App extends Component {
       // THEY ARE NOW A POTENTIAL MATCH
       searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.concat(searcher.hashKey) : [searcher.hashKey];
     }
+    this.setState({ matchingTarget: searcher});
     this.setState({ matchingResponse: searchee});
     this.handleShowRating(true);
   }
   handleBadMatch = () => {
+    let searcher = this.state.matchingTarget;
     let searchee = this.state.matchingResponse;
+    if (searchee.potentialMatches && searchee.potentialMatches.includes(searcher.hashKey)) {
+      searchee.potentialMatches.splice(searchee.potentialMatches.indexOf(searcher.hashKey), 1);
+    }
     let upDown = searchee.upDown ? searchee.upDown : { "up" : 0, "down" : 0};
     upDown.down = upDown.down + 1;
     searchee.upDown = upDown;
+    this.setState({ matchingTarget: searcher});
     this.setState({ matchingResponse: searchee});
     this.handleShowRating(true);
   }
@@ -309,28 +325,30 @@ class App extends Component {
     this.getMatch(searcher);
   }
   handleShowRating = (bool) => {
-    if (bool && this.state.matchingResponse.itemType === "Resume") {
-      this.setState({ rating: true });
-    } else if (bool) {
-        this.handleSaveMatch();
-    } else {
-      this.setState({ rating: false });
-    }
+    this.setState({ rating: bool });
   }
   handleRating = (name, value) => {
     let searchee = this.state.matchingResponse;
-    let rating = searchee[name] ? searchee[name] : { "ratio" : 0, "count" : 0};
-    rating.ratio = ((rating.ratio * rating.count) + value ) / (rating.count + 1);
+    let rating = searchee[name] ? searchee[name] : { "avg" : 0, "count" : 0};
+    rating.avg = ((rating.avg * rating.count) + value ) / (rating.count + 1);
     rating.count = rating.count + 1;
     searchee[name] = rating;
     this.setState({ matchingResponse: searchee });
   }
   handleSaveEdit = () => {
     let obj = this.state.editObj;
-    obj.title = this.state.editTitle;
-    obj.body = this.state.editBody;
-    this.handleSave(obj);
-    this.handleDiscardEdit();
+    if (!this.state.editTitle || !this.state.editBody ) {
+      this.handleShowAlert(true, "Please fill fields.");
+    } else if (this.state.editTitle.length === 0 || this.state.editBody.length === 0) {
+      this.handleShowAlert(true, "Please fill fields.");
+    } else if (this.state.editBody.length > 4800) {
+      this.handleShowAlert(true, "Body must be under 4800 characters.");
+    } else {
+      obj.title = this.state.editTitle;
+      obj.body = this.state.editBody;
+      this.handleSave(obj);
+      this.handleDiscardEdit();
+    }
   }
   // ADD VALIDATE FORM
   handleSave = (obj) => {
@@ -343,7 +361,7 @@ class App extends Component {
       }
       this.loading(false);
     }).catch(err => {
-      alert(err.message);
+      this.handleShowAlert(true, err.message);
       this.loading(false);
     });
   }
@@ -361,7 +379,7 @@ class App extends Component {
       }));
       this.loading(false);
     }).catch(err => {
-      alert(err.message);
+      this.handleShowAlert(true, err.message);
       this.loading(false);
     });
   }
@@ -379,7 +397,14 @@ class App extends Component {
   handleSignOut = () => {
     Auth.signOut()
       .then(() => {this.props.onStateChange('signedOut', null)})
-      .catch(err => {alert('err: ', err.message)})
+      .catch(err => {this.handleShowAlert(true, err.message)})
+  }
+  handleShowFeedback = (obj) => {
+    this.setState({ feedback: obj });
+  }
+  handleShowAlert = (bool, msg) => {
+    this.setState({ alert: bool });
+    this.setState({ alertMsg: msg });
   }
   makeCard = (obj) => {
     const { classes } = this.props;
@@ -410,12 +435,16 @@ class App extends Component {
           <Button
             variant="extendedFab"
             color="primary"
-            aria-label="Delete"
+            aria-label="Find Matches"
             className={classes.button}
             onClick={() => this.handleStartMatch(obj)}
           >
             <NavigationIcon className={classes.extendedIcon} />
             Find Matches
+          </Button>
+          <Button variant="extendedFab" aria-label="Feedback" className={classes.button} style={{backgroundColor: green[500], color: green[50]}} onClick={() => this.handleShowFeedback(obj)}>
+            <ThumbsUpDown className={classes.extendedIcon} />
+            View Feedback
           </Button>
           <Button variant="fab" aria-label="Delete" className={classes.button} onClick={() => this.handleDelete(obj)}>
             <DeleteIcon />
@@ -508,7 +537,7 @@ class App extends Component {
             </div>
           </Drawer>
           <Grid className={classes.gridList}>
-            <Typography variant="h5" component="h2" className={classes.paper}>
+            <Typography variant="h5" className={classes.paper}>
               Your {this.state.itemType} Posts
             </Typography>
             {this.state.items.map((item, i) => (
@@ -566,11 +595,11 @@ class App extends Component {
             scroll={'body'}
             onClose={() => this.handleShowMatch(false)}
             >
-            <DialogTitle id="match-dialog-title">Find Matches</DialogTitle>
+            <DialogTitle id="match-dialog-title">Find {this.state.matchingResponse ? this.state.matchingResponse.itemType : ""} </DialogTitle>
             <DialogContent>
               <Paper className={classes.paper} elevation={0}>
                 <Typography variant="body2" >
-                  {(this.state.matchingResponse && this.state.matchingResponse.body ? this.state.matchingResponse.body : " ").split("\n").map((i, key) => {
+                  {(this.state.matchingResponse ? this.state.matchingResponse.body : " ").split("\n").map((i, key) => {
                         return <Typography key={key}>{i}</Typography>;
                   })}
                 </Typography>
@@ -586,22 +615,54 @@ class App extends Component {
             </DialogActions>
           </Dialog>
           <Dialog open={this.state.rating}
-            aria-labelledby="match-dialog-title"
+            aria-labelledby="rating-dialog-title"
             maxWidth={'sm'}
             scroll={'body'}
             >
-            <DialogTitle id="match-dialog-title">Rating</DialogTitle>
+            <DialogTitle id="rating-dialog-title">Rating</DialogTitle>
             <DialogContent>
-              <Rating label="Communication" name="communication" onChange={this.handleRating.bind(this)} className={classes.rating} />
-              <Rating label="Hard Skills" name="hardSkills" onChange={this.handleRating.bind(this)} className={classes.rating}/>
-              <Rating label="Soft Skills" name="softSkills" onChange={this.handleRating.bind(this)} className={classes.rating}/>
-              <Rating label="Certifications" name="certifications" onChange={this.handleRating.bind(this)} className={classes.rating}/>
-              <Rating label="Qualifications" name="qualifications" onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][0] : null} onChange={this.handleRating.bind(this)} className={classes.rating} />
+              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][1] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][2] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][3] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][4] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
             </DialogContent>
             <DialogActions>
             <Button onClick={this.handleSaveMatch} color="primary">
               Submit
             </Button>
+            </DialogActions>
+          </Dialog>
+          <Dialog open={this.state.feedback !== false}
+            aria-labelledby="feedback-dialog-title"
+            maxWidth={'sm'}
+            scroll={'body'}
+            onClose={() => this.handleShowFeedback(false)}
+            >
+            <DialogTitle id="match-dialog-title">Feedback</DialogTitle>
+            <DialogContent>
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][0]] ? this.state.feedback[ratingNames[this.state.itemType][0]].avg : 2} name={ratingNames[this.state.itemType][0]} disabled={true} className={classes.rating} />
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][1]] ? this.state.feedback[ratingNames[this.state.itemType][1]].avg : 2} name={ratingNames[this.state.itemType][1]} disabled={true} className={classes.rating}/>
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][2]] ? this.state.feedback[ratingNames[this.state.itemType][2]].avg : 2} name={ratingNames[this.state.itemType][2]} disabled={true} className={classes.rating}/>
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][3]] ? this.state.feedback[ratingNames[this.state.itemType][3]].avg : 2} name={ratingNames[this.state.itemType][3]} disabled={true} className={classes.rating}/>
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][4]] ? this.state.feedback[ratingNames[this.state.itemType][4]].avg : 2} name={ratingNames[this.state.itemType][4]} disabled={true} className={classes.rating}/>
+            </DialogContent>
+            <DialogActions>
+            </DialogActions>
+          </Dialog>
+          <Dialog open={this.state.alert}
+            maxWidth={'xs'}
+            onClose={() => this.handleShowAlert(false, null)}
+            >
+            <DialogContent style={{textAlign: 'center'}}>
+              <Typography variant="h6" className={classes.paper}>
+                {this.state.alertMsg}
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => this.handleShowAlert(false, null)} color="primary">
+                Okay
+              </Button>
             </DialogActions>
           </Dialog>
           <Dialog open={this.state.loading}
