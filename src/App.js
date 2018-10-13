@@ -390,8 +390,10 @@ class App extends Component {
             <Typography gutterBottom variant="h5">
               {obj.title}
             </Typography>
-            <Typography variant="inherit" >
-              {obj.body}
+            <Typography variant="body2">
+              {obj.body.split("\n").map((i, key) => {
+                return <Typography key={key}>{i}</Typography>;
+              })}
             </Typography>
           </CardContent>
         </CardActionArea>
@@ -568,7 +570,9 @@ class App extends Component {
             <DialogContent>
               <Paper className={classes.paper} elevation={0}>
                 <Typography variant="inherit" >
-                  {(this.state.matchingResponse) ? this.state.matchingResponse.body : ""}
+                  {this.state.matchingResponse.body.split("\n").map((i, key) => {
+                    return <Typography key={key}>{i}</Typography>;
+                  })}
                 </Typography>
                 </Paper>
             </DialogContent>
