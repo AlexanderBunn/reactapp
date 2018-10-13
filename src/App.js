@@ -148,7 +148,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      suspendLoad: true,
+      suspendLoad: false,
       username: Auth.user.username,
       itemType: 'Resume',
       loading: false,
@@ -161,7 +161,7 @@ class App extends Component {
       matching: false,
       matchingTarget: null,
       matchingResponse: {},
-      rating: true,
+      rating: false,
       items: [],
     };
     this.updateItems(this.state.itemType);
@@ -267,9 +267,8 @@ class App extends Component {
   handleGoodMatch = () => {
     let searcher = this.state.matchingTarget;
     let searchee = this.state.matchingResponse;
-    let upDown = searchee.upDown ? searchee.upDown : { "ratio" : 1, "count" : 1};
-    upDown.ratio = ((upDown.ratio * upDown.count) + 1 ) / (upDown.count + 1);
-    upDown.count = upDown.count + 1;
+    let upDown = searchee.upDown ? searchee.upDown : { "up" : 0, "down" : 0};
+    upDown.up = upDown.up + 1;
     searchee.upDown = upDown;
     // HAVE THEY MATCHED ME
     if (searcher.potentialMatches && searcher.potentialMatches.includes(searchee.hashKey)) {
@@ -286,9 +285,8 @@ class App extends Component {
   }
   handleBadMatch = () => {
     let searchee = this.state.matchingResponse;
-    let upDown = searchee.upDown ? searchee.upDown : { "ratio" : 1, "count" : 1};
-    upDown.ratio = (upDown.ratio * upDown.count) / (upDown.count + 1);
-    upDown.count = upDown.count + 1;
+    let upDown = searchee.upDown ? searchee.upDown : { "up" : 0, "down" : 0};
+    upDown.down = upDown.down + 1;
     searchee.upDown = upDown;
     this.setState({ matchingResponse: searchee});
     this.handleShowRating(true);
@@ -296,15 +294,21 @@ class App extends Component {
   handleSaveMatch = () => {
     let searcher = this.state.matchingTarget;
     let searchee = this.state.matchingResponse;
-    searcher.seen = searcher.seen ? searcher.seen.push(searchee.hashKey) : searchee.hashKey;
+    searcher.seen = searcher.seen ? searcher.seen.concat(searchee.hashKey) : [searchee.hashKey];
     this.setState({ matchingTarget: searcher });
-    // this.handleSave(searcher);
-    // this.handleSave(searchee);
+    this.handleSave(searcher);
+    this.handleSave(searchee);
     this.handleShowRating(false);
-    this.getMatch();
+    this.getMatch(searcher);
   }
   handleShowRating = (bool) => {
-    this.setState({ rating: bool });
+    if (bool && this.state.matchingResponse.itemType === "Resume") {
+      this.setState({ rating: true });
+    } else if (bool) {
+        this.handleSaveMatch();
+    } else {
+      this.setState({ rating: false });
+    }
   }
   handleRating = (name, value) => {
     let searchee = this.state.matchingResponse;
@@ -355,14 +359,14 @@ class App extends Component {
     });
   }
   handleSwitchUser = (user) => {
-    this.setState({ itemType: newType })
-    this.updateItems(newType);
     let newType = this.state.itemType;
     if (user === 1) {
       newType = 'Resume';
     } else if (user === 2) {
       newType = 'Job';
     }
+    this.setState({ itemType: newType });
+    this.updateItems(newType);
     this.handleCloseMenu();
   }
   handleSignOut = () => {
