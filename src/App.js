@@ -66,6 +66,12 @@ import Rating from './Rating';
 // LOADING DIALOG
 import CircularProgress from '@material-ui/core/CircularProgress';
 
+// MATCH EXPANSION PANEL
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+
 // AMPLIFY AUTHENICATOR
 import { ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignIn, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
 
@@ -99,7 +105,7 @@ const styles = theme => ({
   drawerPaper: {
     zIndex: 1,
     marginTop: 60,
-    width: 250,
+    width: 275,
   },
   menuButton: {
     marginLeft: -12,
@@ -158,6 +164,11 @@ class App extends Component {
     this.state = {
       suspendLoad: false,
       username: Auth.user.username,
+      contactDetails: null,
+      contactName: null,
+      contactEmail: null,
+      contactPhone: null,
+      editContact: false,
       itemType: 'Resume',
       loading: false,
       anchorEl: null,
@@ -169,6 +180,8 @@ class App extends Component {
       matching: false,
       matchingTarget: null,
       matchingResponse: null,
+      matchObject: null,
+      curMatchViewing: null,
       rating: false,
       feedback: false,
       alert: false,
@@ -176,7 +189,7 @@ class App extends Component {
       items: [],
     };
     this.updateItems(this.state.itemType);
-    // this.updateMatch();
+    this.checkContactDetails();
   }
   loading = (bool) => {
     this.setState({ loading: bool });
@@ -186,6 +199,7 @@ class App extends Component {
       this.loading(true);
       API.get(apiName, '/' + newType + '/' + this.state.username).then(response => {
         this.setState({items: response.Items});
+        response.Items.forEach((obj) => obj.matches.forEach((item) => (this.getMatchDetails(item))));
         this.loading(false);
       }).catch(err => {
         this.handleShowAlert(true, err.message);
@@ -223,7 +237,7 @@ class App extends Component {
       }
     };
     if (target.potentialMatches) {
-      params.body.query.bool["must"] = { "terms" : {"_id": target.potentialMatches } };
+      params.body.query.bool["must"] = { "terms" : {"_id": target.potentialMatches.map(el => el.hashKey)} };
     }
     if (target.seen) {
       params.body.query.bool["must_not"] = { "terms" : {"_id": target.seen } };
@@ -246,6 +260,79 @@ class App extends Component {
       this.handleShowAlert(true, err.message);
     });
   }
+
+  checkContactDetails = () => {
+    API.get(apiName, '/Contact/' + this.state.username).then(response => {
+      if (response.Item === undefined) {
+        this.handleShowContactDetails(true);
+        this.handleShowAlert(true, "Please update contact details");
+      } else {
+        this.setState({contactDetails: response.Items});
+      }
+    }).catch(err => {
+      this.handleShowAlert(true, err.message);
+    });
+  }
+  saveContactDetails = (obj) => {
+    this.loading(true);
+    let params = {body: obj};
+    API.put(apiName, '/Contact/' + this.state.username, params).then(response => {
+      this.loading(false);
+    }).catch(err => {
+      this.handleShowAlert(true, err.message);
+      this.loading(false);
+    });
+  }
+  handleShowContactDetails = (bool) => {
+    if (bool === false) {
+      let obj = {};
+      if (!this.state.contactName || !this.state.contactEmail || !this.state.contactPhone) {
+        this.handleShowAlert(true, "Please fill all fields");
+      } else if (this.state.contactName.length === 0 || this.state.contactEmail.length === 0 || this.state.contactPhone.length === 0) {
+        this.handleShowAlert(true, "Please fill all fields");
+      } else {
+        obj.name = this.state.contactName;
+        obj.email = this.state.contactEmail;
+        obj.phone = this.state.contactPhone;
+        this.setState({ contactDetails: obj });
+        this.saveContactDetails(obj);
+        this.setState({ editContact: false });
+      }
+    } else {
+      if (this.state.contactDetails) {
+        this.setState({ contactName: this.state.contactDetails.name});
+        this.setState({ contactEmail: this.state.contactDetails.email});
+        this.setState({ contactPhone: this.state.contactDetails.phone});
+      }
+      this.setState({ editContact: true });
+    }
+  }
+
+  getMatchDetails = (matchObj) => {
+    this.loading(true);
+    API.get(apiName, '/Contact/' + matchObj.userName).then(response => {
+      let newMatchObject = this.state.matchObject ? this.state.matchObject : {};
+      newMatchObject[matchObj.userName] = response.Item;
+      this.setState({ matchObject: newMatchObject });
+      this.loading(false);
+    }).catch(err => {
+      this.handleShowAlert(true, err.message);
+      this.loading(false);
+    });
+    API.get(apiName, '/' + this.state.itemType + '/Search/' + matchObj.hashKey).then(response => {
+      let newMatchObject = this.state.matchObject ? this.state.matchObject : {};
+      newMatchObject[matchObj.hashKey] = response.Item;
+      this.setState({ matchObject: newMatchObject });
+      this.loading(false);
+    }).catch(err => {
+      this.handleShowAlert(true, err.message);
+      this.loading(false);
+    });
+  }
+  handleShowMatchDetails = (matchObj) => {
+    this.setState({ curMatchViewing: matchObj });
+  }
+
   handleChange = name => event => {
     this.setState({
       [name]: event.target.value,
@@ -263,7 +350,7 @@ class App extends Component {
   handleNew = () => () => {
     let newObj = {
       "itemType": this.state.itemType,
-      "userName": this.state.username
+      "userName": this.state.username,
     };
     this.handleEdit(newObj);
   }
@@ -286,19 +373,21 @@ class App extends Component {
   }
   handleGoodMatch = () => {
     let searcher = this.state.matchingTarget;
+    let searcherMatch = {"userName": searcher.userName, "hashKey": searcher.hashKey};
     let searchee = this.state.matchingResponse;
+    let searcheeMatch = {"userName": searchee.userName, "hashKey": searchee.hashKey};
     let upDown = searchee.upDown ? searchee.upDown : { "up" : 0, "down" : 0};
     upDown.up = upDown.up + 1;
     searchee.upDown = upDown;
     // HAVE THEY MATCHED ME
-    if (searcher.potentialMatches && searcher.potentialMatches.includes(searchee.hashKey)) {
+    if (searcher.potentialMatches && searcher.potentialMatches.filter(el => el.hashKey === searchee.hashKey)) {
       // THEY ARE NOW A FULL MATCH
-      searcher.potentialMatches.splice(searcher.potentialMatches.indexOf(searchee.hashKey), 1);
-      searcher.matches = searcher.matches ? searcher.matches.concat(searchee.hashKey) : [searchee.hashKey];
-      searchee.matches = searchee.matches ? searchee.matches.concat(searcher.hashKey) : [searcher.hashKey];
+      searcher.potentialMatches.splice(searcher.potentialMatches.indexOf(searcheeMatch), 1);
+      searcher.matches = searcher.matches ? searcher.matches.concat(searcheeMatch) : [searcheeMatch];
+      searchee.matches = searchee.matches ? searchee.matches.concat(searcherMatch) : [searcherMatch];
     } else {
       // THEY ARE NOW A POTENTIAL MATCH
-      searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.concat(searcher.hashKey) : [searcher.hashKey];
+      searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.concat(searcherMatch) : [searcherMatch];
     }
     this.setState({ matchingTarget: searcher});
     this.setState({ matchingResponse: searchee});
@@ -306,9 +395,11 @@ class App extends Component {
   }
   handleBadMatch = () => {
     let searcher = this.state.matchingTarget;
+    let searcherMatch = {"userName": searcher.userName, "hashKey": searcher.hashKey};
     let searchee = this.state.matchingResponse;
-    if (searchee.potentialMatches && searchee.potentialMatches.includes(searcher.hashKey)) {
-      searchee.potentialMatches.splice(searchee.potentialMatches.indexOf(searcher.hashKey), 1);
+    let searcheeMatch = {"userName": searchee.userName, "hashKey": searchee.hashKey};
+    if (searchee.potentialMatches && searchee.potentialMatches.includes(searcherMatch)) {
+      searchee.potentialMatches.splice(searchee.potentialMatches.indexOf(searcherMatch), 1);
     }
     let upDown = searchee.upDown ? searchee.upDown : { "up" : 0, "down" : 0};
     upDown.down = upDown.down + 1;
@@ -341,9 +432,9 @@ class App extends Component {
   handleSaveEdit = () => {
     let obj = this.state.editObj;
     if (!this.state.editTitle || !this.state.editBody ) {
-      this.handleShowAlert(true, "Please fill fields.");
+      this.handleShowAlert(true, "Please fill all fields");
     } else if (this.state.editTitle.length === 0 || this.state.editBody.length === 0) {
-      this.handleShowAlert(true, "Please fill fields.");
+      this.handleShowAlert(true, "Please fill all fields");
     } else if (this.state.editBody.length > 4800) {
       this.handleShowAlert(true, "Body must be under 4800 characters.");
     } else {
@@ -408,78 +499,77 @@ class App extends Component {
     this.setState({ alert: bool });
     this.setState({ alertMsg: msg });
   }
-  makeCard = (obj) => {
+  makeCard = (obj, i) => {
     const { classes } = this.props;
     return (
-      <Card className={classes.card}>
-        <CardActionArea onClick={() => this.handleEdit(obj)}>
-          <CardContent>
-            <Typography gutterBottom variant="h5">
-              {obj.title}
-            </Typography>
-            <Typography variant="body2">
-              {obj.body.split("\n").map((i, key) => {
-                    return <Typography key={key}>{i}</Typography>;
-              })}
-            </Typography>
-          </CardContent>
-        </CardActionArea>
-        <CardActions>
-          <Button
-            variant="fab"
-            color="secondary"
-            aria-label="Edit"
-            className={classes.button}
-            onClick={() => this.handleEdit(obj)}
-          >
-            <EditIcon />
-          </Button>
-          <Button
-            variant="extendedFab"
-            color="primary"
-            aria-label="Find Matches"
-            className={classes.button}
-            onClick={() => this.handleStartMatch(obj)}
-          >
-            <NavigationIcon className={classes.extendedIcon} />
-            Find Matches
-          </Button>
-          <Button variant="extendedFab" aria-label="Feedback" className={classes.button} style={{backgroundColor: green[500], color: green[50]}} onClick={() => this.handleShowFeedback(obj)}>
-            <ThumbsUpDownIcon className={classes.extendedIcon} />
-            View Feedback
-          </Button>
-          <Button variant="fab" aria-label="Delete" className={classes.button} onClick={() => this.handleDelete(obj)}>
-            <DeleteIcon />
-          </Button>
-        </CardActions>
-      </Card>
+      <Paper key={i} className={classes.paper} elevation={0}>
+        <Card className={classes.card}>
+          <CardActionArea onClick={() => this.handleEdit(obj)}>
+            <CardContent>
+              <Typography gutterBottom variant="h5">
+                {obj.title}
+              </Typography>
+              <Typography variant="body2">
+                {obj.body.split("\n").map((i, key) => {
+                      return <Typography key={key}>{i}</Typography>;
+                })}
+              </Typography>
+            </CardContent>
+          </CardActionArea>
+          <CardActions>
+            <Button
+              variant="fab"
+              color="secondary"
+              aria-label="Edit"
+              className={classes.button}
+              onClick={() => this.handleEdit(obj)}
+            >
+              <EditIcon />
+            </Button>
+            <Button
+              variant="extendedFab"
+              color="primary"
+              aria-label="Find Matches"
+              className={classes.button}
+              onClick={() => this.handleStartMatch(obj)}
+            >
+              <NavigationIcon className={classes.extendedIcon} />
+              Find Matches
+            </Button>
+            <Button variant="extendedFab" aria-label="Feedback" className={classes.button} style={{backgroundColor: green[500], color: green[50]}} onClick={() => this.handleShowFeedback(obj)}>
+              <ThumbsUpDownIcon className={classes.extendedIcon} />
+              View Feedback
+            </Button>
+            <Button variant="fab" aria-label="Delete" className={classes.button} onClick={() => this.handleDelete(obj)}>
+              <DeleteIcon />
+            </Button>
+          </CardActions>
+        </Card>
+        { obj.matches && <ExpansionPanel>
+           <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+             <Typography>View Matches</Typography>
+           </ExpansionPanelSummary>
+           <ExpansionPanelDetails>
+               {obj.matches.map((item, i) => (this.makeMatchButton(item, i)))}
+           </ExpansionPanelDetails>
+         </ExpansionPanel>}
+      </Paper>
     );
   }
+
+  makeMatchButton = (matchObj, i) => {
+    const { classes } = this.props;
+    return (
+      <Button key={i} onClick={() => this.handleShowMatchDetails(matchObj)}>
+        {this.state.matchObject && this.state.matchObject[matchObj.hashKey] ? this.state.matchObject[matchObj.hashKey].title : ""}
+      </Button>
+    )
+  }
+
   render() {
     const { classes } = this.props;
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
-    const list = (
-      <div>
-        <List>
-          <div>
-            <ListItem button>
-              <ListItemIcon>
-                <ViewIcon />
-              </ListItemIcon>
-              <ListItemText primary={"My " + this.state.itemType + "s"} />
-            </ListItem>
-            <ListItem button>
-              <ListItemIcon>
-                <ViewIcon />
-              </ListItemIcon>
-              <ListItemText primary="View Matches" />
-            </ListItem>
-          </div>
-        </List>
-        <Divider />
-      </div>
-    );
 
     return (
       <MuiThemeProvider theme={theme}>
@@ -535,18 +625,29 @@ class App extends Component {
               onKeyDown={this.toggleDrawer(false)}
               className={classes.drawerPaper}
             >
-              {list}
+                <List>
+                  <div>
+                    <ListItem button>
+                      <ListItemIcon>
+                        <ViewIcon />
+                      </ListItemIcon>
+                      <ListItemText primary={"My " + this.state.itemType + "s"} />
+                    </ListItem>
+                    <ListItem button>
+                      <ListItemIcon>
+                        <ViewIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="Edit Contact Details" onClick={() => this.handleShowContactDetails(true)}/>
+                    </ListItem>
+                  </div>
+                </List>
             </div>
           </Drawer>
-          <Grid className={classes.gridList}>
+          <Grid className={classes.gridList} >
             <Typography variant="h5" className={classes.paper}>
               Your {this.state.itemType} Posts
             </Typography>
-            {this.state.items.map((item, i) => (
-              <Paper key={i} className={classes.paper} elevation={0}>
-                {this.makeCard(item)}
-              </Paper>
-            ))}
+            {this.state.items.map((item, i) => (this.makeCard(item, i)))}
           </Grid>
           <div className={classes.addButtonContainer}>
             <Button variant="fab" color='secondary' onClick={this.handleNew()} className={classes.addButton}><AddIcon /></Button>
@@ -675,6 +776,86 @@ class App extends Component {
             <DialogActions>
             </DialogActions>
           </Dialog>
+          <Dialog open={this.state.editContact}
+            aria-labelledby="form-dialog-title"
+            fullWidth={true}
+            maxWidth={'md'}
+            scroll={'body'}
+            >
+            <DialogTitle id="form-dialog-title">Edit Contact Details</DialogTitle>
+            <DialogContent>
+              <TextField
+                label="Contact Name"
+                rowsMax="100"
+                fullWidth={true}
+                value={this.state.contactName}
+                onChange={this.handleChange('contactName')}
+                className={classes.dialogField}
+                margin="normal"
+                variant="outlined"
+              />
+              <TextField
+                label="Contact Email"
+                rowsMax="100"
+                fullWidth={true}
+                value={this.state.contactEmail}
+                onChange={this.handleChange('contactEmail')}
+                className={classes.dialogField}
+                margin="normal"
+                variant="outlined"
+              />
+              <TextField
+                label="Contact Phone"
+                rowsMax="100"
+                fullWidth={true}
+                value={this.state.contactPhone}
+                onChange={this.handleChange('contactPhone')}
+                className={classes.dialogField}
+                margin="normal"
+                variant="outlined"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => this.handleShowContactDetails(false)} color="primary">
+                Save
+              </Button>
+            </DialogActions>
+          </Dialog>
+          <Dialog open={this.state.curMatchViewing !== null}
+            aria-labelledby="match-dialog-title"
+            fullWidth={true}
+            maxWidth={'md'}
+            scroll={'body'}
+            onClose={() => this.handleShowMatchDetails(null)}
+            >
+            <DialogContent>
+              <Paper className={classes.paper} elevation={2}>
+                <Typography gutterBottom variant="h5">
+                  {this.state.curMatchViewing ? this.state.matchObject[this.state.curMatchViewing.hashKey].title : ""}
+                </Typography>
+                <Typography gutterBottom variant="body2">
+                  {this.state.curMatchViewing ? this.state.matchObject[this.state.curMatchViewing.hashKey].body.split("\n").map((i, key) => {
+                        return <Typography key={key}>{i}</Typography>;
+                  }) : ""}
+                </Typography>
+              </Paper>
+              <Paper className={classes.paper} elevation={2}>
+                <Grid container spacing={24} alignItems="center">
+                  <Grid item xs={6}><Typography variant="body2">Name</Typography></Grid>
+                  <Grid item xs={6}><Typography variant="body2">{this.state.curMatchViewing ? this.state.matchObject[this.state.curMatchViewing.userName].name : ""}</Typography></Grid>
+                  <Grid item xs={6}><Typography variant="body2">Email</Typography></Grid>
+                  <Grid item xs={6}><Typography variant="body2">{this.state.curMatchViewing ? this.state.matchObject[this.state.curMatchViewing.userName].email : ""}</Typography></Grid>
+                  <Grid item xs={6}><Typography variant="body2">Phone</Typography></Grid>
+                  <Grid item xs={6}><Typography variant="body2">{this.state.curMatchViewing ? this.state.matchObject[this.state.curMatchViewing.userName].phone : ""}</Typography></Grid>
+                </Grid>
+              </Paper>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => this.handleShowMatchDetails(null)} color="primary">
+                Done
+              </Button>
+            </DialogActions>
+          </Dialog>
           <Dialog open={this.state.alert}
             maxWidth={'xs'}
             onClose={() => this.handleShowAlert(false, null)}
@@ -703,14 +884,6 @@ class App extends Component {
   }
 }
 
-// This is my custom Sign in component
-// class MySignIn extends SignIn {
-//   render() {
-//     ...
-//   }
-// }
-
-// IMPORT MATERIAL UI CLASSES
 App.propTypes = {
   classes: PropTypes.object.isRequired,
 };
