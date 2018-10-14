@@ -58,7 +58,7 @@ import TextField from '@material-ui/core/TextField';
 // MATCH DIALOG
 import ThumbUpIcon from '@material-ui/icons/ThumbUp';
 import ThumbDownIcon from '@material-ui/icons/ThumbDown';
-import ThumbsUpDown from '@material-ui/icons/ThumbsUpDown';
+import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 
 // RATING DIALOG
 import Rating from './Rating';
@@ -139,6 +139,9 @@ const styles = theme => ({
     pointerEvents: 'all',
   },
   rating: {
+  },
+  gridRow: {
+    flex: 1,
   },
 });
 
@@ -350,7 +353,6 @@ class App extends Component {
       this.handleDiscardEdit();
     }
   }
-  // ADD VALIDATE FORM
   handleSave = (obj) => {
     this.loading(true);
     // API CALL
@@ -443,7 +445,7 @@ class App extends Component {
             Find Matches
           </Button>
           <Button variant="extendedFab" aria-label="Feedback" className={classes.button} style={{backgroundColor: green[500], color: green[50]}} onClick={() => this.handleShowFeedback(obj)}>
-            <ThumbsUpDown className={classes.extendedIcon} />
+            <ThumbsUpDownIcon className={classes.extendedIcon} />
             View Feedback
           </Button>
           <Button variant="fab" aria-label="Delete" className={classes.button} onClick={() => this.handleDelete(obj)}>
@@ -646,7 +648,29 @@ class App extends Component {
               <Rating value={this.state.feedback[ratingNames[this.state.itemType][2]] ? this.state.feedback[ratingNames[this.state.itemType][2]].avg : 2} name={ratingNames[this.state.itemType][2]} disabled={true} className={classes.rating}/>
               <Rating value={this.state.feedback[ratingNames[this.state.itemType][3]] ? this.state.feedback[ratingNames[this.state.itemType][3]].avg : 2} name={ratingNames[this.state.itemType][3]} disabled={true} className={classes.rating}/>
               <Rating value={this.state.feedback[ratingNames[this.state.itemType][4]] ? this.state.feedback[ratingNames[this.state.itemType][4]].avg : 2} name={ratingNames[this.state.itemType][4]} disabled={true} className={classes.rating}/>
-              <Rating value={this.state.feedback.upDown ? Math.min(Math.max(Math.round(this.state.feedback.upDown.up / this.state.feedback.upDown.down), 0), 5) : 2} name={<ThumbsUpDown className={classes.extendedIcon} />} disabled={true} className={classes.rating}/>
+              <Grid container spacing={24} alignItems="center">
+                <Grid item xs={2}></Grid>
+                 <Grid item xs={2}>
+                  <ThumbsUpDownIcon />
+                 </Grid>
+                 <Grid item xs={2}></Grid>
+                 <Grid item xs={1}>
+                  <ThumbDownIcon />
+                 </Grid>
+                 <Grid item xs={2}>
+                   <Typography variant="h6" color="inherit" >
+                    {this.state.feedback.upDown ? this.state.feedback.upDown.down : 0}
+                   </Typography>
+                 </Grid>
+                 <Grid item xs={1}>
+                  <ThumbUpIcon />
+                 </Grid>
+                 <Grid item xs={2}>
+                   <Typography variant="h6" color="inherit" >
+                    {this.state.feedback.upDown ? this.state.feedback.upDown.up : 0}
+                   </Typography>
+                 </Grid>
+               </Grid>
             </DialogContent>
             <DialogActions>
             </DialogActions>
