@@ -146,7 +146,6 @@ const styles = theme => ({
 });
 
 const apiName = config.apiGateway.NAME;
-
 const ratingNames = {
   "Job" : ["Benefit", "Intrest", "Usefulness", "Rewarding", "Achievable"],
   "Resume" : ["Communication Skills", "Soft Skills", "Hard Skills", "Experience", "Qualifications"]
@@ -624,11 +623,11 @@ class App extends Component {
             >
             <DialogTitle id="rating-dialog-title">Rating</DialogTitle>
             <DialogContent>
-              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][0] : null} onChange={this.handleRating.bind(this)} className={classes.rating} />
-              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][1] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
-              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][2] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
-              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][3] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
-              <Rating value={3} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][4] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating value={0} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][0] : null} onChange={this.handleRating.bind(this)} className={classes.rating} />
+              <Rating value={0} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][1] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating value={0} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][2] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating value={0} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][3] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
+              <Rating value={0} name={this.state.matchingResponse ? ratingNames[this.state.matchingResponse.itemType][4] : null} onChange={this.handleRating.bind(this)} className={classes.rating}/>
             </DialogContent>
             <DialogActions>
             <Button onClick={this.handleSaveMatch} color="primary">
