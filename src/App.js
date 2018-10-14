@@ -148,8 +148,8 @@ const styles = theme => ({
 const apiName = config.apiGateway.NAME;
 
 const ratingNames = {
-  "Job" : ["Location", "Intrest", "Usefulness", "Rewarding", "Achievable"],
-  "Resume" : ["Communication Skills", "Soft Skills", "Hard Skills", "Certifications", "Qualifications"]
+  "Job" : ["Benefit", "Intrest", "Usefulness", "Rewarding", "Achievable"],
+  "Resume" : ["Communication Skills", "Soft Skills", "Hard Skills", "Experience", "Qualifications"]
 };
 
 // ADD CHECKS FOR ERRORS
@@ -264,7 +264,7 @@ class App extends Component {
   handleNew = () => () => {
     let newObj = {
       "itemType": this.state.itemType,
-      "userName": this.state.userName
+      "userName": this.state.username
     };
     this.handleEdit(newObj);
   }
