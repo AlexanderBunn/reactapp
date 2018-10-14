@@ -262,9 +262,10 @@ class App extends Component {
     this.setState({ anchorEl: null });
   };
   handleNew = () => () => {
-    let newObj = {};
-    newObj.itemType = this.state.itemType;
-    newObj.userName = this.state.userName;
+    let newObj = {
+      "itemType": this.state.itemType,
+      "userName": this.state.userName
+    };
     this.handleEdit(newObj);
   }
   handleEdit = (obj) => {
