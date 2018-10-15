@@ -199,7 +199,9 @@ class App extends Component {
       this.loading(true);
       API.get(apiName, '/' + newType + '/' + this.state.username).then(response => {
         this.setState({items: response.Items});
-        response.Items.forEach((obj) => obj.matches.forEach((item) => (this.getMatchDetails(item))));
+        response.Items.forEach(obj =>
+          obj.matches ? (obj.matches.forEach(item => this.getMatchDetails(item))) : ""
+        );
         this.loading(false);
       }).catch(err => {
         this.handleShowAlert(true, err.message);
