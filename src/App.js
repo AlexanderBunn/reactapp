@@ -749,10 +749,10 @@ class App extends Component {
             >
             <DialogTitle id="match-dialog-title">Feedback</DialogTitle>
             <DialogContent>
-              <Rating value={this.state.feedback[ratingNames[this.state.itemType][0]] ? this.state.feedback[ratingNames[this.state.itemType][0]].avg : 2} name={ratingNames[this.state.itemType][0]} disabled={true} className={classes.rating} />
-              <Rating value={this.state.feedback[ratingNames[this.state.itemType][1]] ? this.state.feedback[ratingNames[this.state.itemType][1]].avg : 2} name={ratingNames[this.state.itemType][1]} disabled={true} className={classes.rating}/>
-              <Rating value={this.state.feedback[ratingNames[this.state.itemType][2]] ? this.state.feedback[ratingNames[this.state.itemType][2]].avg : 2} name={ratingNames[this.state.itemType][2]} disabled={true} className={classes.rating}/>
-              <Rating value={this.state.feedback[ratingNames[this.state.itemType][3]] ? this.state.feedback[ratingNames[this.state.itemType][3]].avg : 2} name={ratingNames[this.state.itemType][3]} disabled={true} className={classes.rating}/>
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][0]] ? this.state.feedback[ratingNames[this.state.itemType][0]].avg : 1} name={ratingNames[this.state.itemType][0]} disabled={true} className={classes.rating} />
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][1]] ? this.state.feedback[ratingNames[this.state.itemType][1]].avg : 3} name={ratingNames[this.state.itemType][1]} disabled={true} className={classes.rating}/>
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][2]] ? this.state.feedback[ratingNames[this.state.itemType][2]].avg : 0} name={ratingNames[this.state.itemType][2]} disabled={true} className={classes.rating}/>
+              <Rating value={this.state.feedback[ratingNames[this.state.itemType][3]] ? this.state.feedback[ratingNames[this.state.itemType][3]].avg : 3} name={ratingNames[this.state.itemType][3]} disabled={true} className={classes.rating}/>
               <Rating value={this.state.feedback[ratingNames[this.state.itemType][4]] ? this.state.feedback[ratingNames[this.state.itemType][4]].avg : 2} name={ratingNames[this.state.itemType][4]} disabled={true} className={classes.rating}/>
               <Grid container spacing={24} alignItems="center">
                 <Grid item xs={2}></Grid>
