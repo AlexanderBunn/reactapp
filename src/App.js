@@ -390,6 +390,7 @@ class App extends Component {
       searcher.potentialMatches.splice(searcher.potentialMatches.indexOf(searcheeMatch), 1);
       searcher.matches = searcher.matches ? searcher.matches.concat(searcheeMatch) : [searcheeMatch];
       searchee.matches = searchee.matches ? searchee.matches.concat(searcherMatch) : [searcherMatch];
+      this.getMatchDetails(searcheeMatch);
     } else {
       // THEY ARE NOW A POTENTIAL MATCH
       searchee.potentialMatches = searchee.potentialMatches ? searchee.potentialMatches.concat(searcherMatch) : [searcherMatch];
