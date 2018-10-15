@@ -267,7 +267,10 @@ class App extends Component {
         this.handleShowContactDetails(true);
         this.handleShowAlert(true, "Please update contact details");
       } else {
-        this.setState({contactDetails: response.Items});
+        this.setState({ contactDetails: response.Item });
+        this.setState({ contactName: response.Item.name });
+        this.setState({ contactEmail: response.Item.email });
+        this.setState({ contactPhone: response.Item.phone });
       }
     }).catch(err => {
       this.handleShowAlert(true, err.message);
