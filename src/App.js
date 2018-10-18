@@ -21,14 +21,11 @@ import CloseIcon from '@material-ui/icons/Close';
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
-import Divider from '@material-ui/core/Divider';
 
 // DRAWER LIST
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-// import ViewJobsIcon from '@material-ui/icons/Assignment';
-// import ViewResumesIcon from '@material-ui/icons/AssignmentInd';
 import ViewIcon from '@material-ui/icons/AssignmentInd';
 
 // CARDS
@@ -73,7 +70,8 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 // AMPLIFY AUTHENICATOR
-import { ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignIn, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
+import { SignIn, ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
+import MySignIn from './Components/MySignIn'
 
 // AWS AMPLIFY
 import Amplify, { Auth, API } from 'aws-amplify';
@@ -877,13 +875,6 @@ class App extends Component {
               </Button>
             </DialogActions>
           </Dialog>
-          <Dialog open={this.state.loading}
-            maxWidth={'xs'}
-            >
-            <DialogContent style={{textAlign: 'center'}}>
-            <CircularProgress color="primary" />
-            </DialogContent>
-          </Dialog>
         </div>
       </MuiThemeProvider>
     );
@@ -896,7 +887,7 @@ App.propTypes = {
 
 export default withStyles(styles)(
   withAuthenticator(App, false, [
-  <SignIn/>,
+  <MySignIn/>,
   <ConfirmSignIn/>,
   <VerifyContact/>,
   <SignUp/>,

@@ -9,8 +9,13 @@
     "aws-amplify-react": "^2.0.7",
     "material-ui-icons": "^1.0.0-beta.36",
     "react": "^16.5.2",
+    "react-art": "^16.5.2",
     "react-dom": "^16.5.2",
-    "react-scripts": "2.0.4"
+    "react-native": "^0.57.3",
+    "react-native-web": "^0.9.3",
+    "react-router-dom": "^4.3.1",
+    "react-router-native": "^4.3.0",
+    "react-scripts": "^2.0.4"
   },
   "scripts": {
     "start": "react-scripts start",
