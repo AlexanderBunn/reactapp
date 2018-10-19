@@ -1,23 +1,16 @@
 // REACT
 import React, { Component } from 'react';
 
-// MATERIAL UI
-import PropTypes from 'prop-types';
-import { withStyles, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
-
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-  }
+class LoadingDialog extends Component {
 
   render() {
     return (
-      <Dialog open={this.props.loading}
+      <Dialog open={this.props.open}
         maxWidth={'xs'}
         >
         <DialogContent style={{textAlign: 'center'}}>
@@ -27,3 +20,5 @@ class App extends Component {
     );
   }
 }
+
+export default LoadingDialog;
