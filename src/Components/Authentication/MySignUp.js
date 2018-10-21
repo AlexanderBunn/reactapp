@@ -44,6 +44,7 @@ export default class MySignUp extends SignUp {
       this.state = {
           username: null,
           password: null,
+          confirmPassword: null,
           email: null,
           loading: false,
           alert: null,
@@ -128,6 +129,18 @@ export default class MySignUp extends SignUp {
                   value={this.state.password}
                   onChange={this.handleChange('password')}
                 />
+                <TextField
+                  required
+                  label="Confirm Password"
+                  fullWidth={true}
+                  margin="normal"
+                  variant="outlined"
+                  type="password"
+                  InputLabelProps={{shrink: true}}
+                  value={this.state.confirmPassword}
+                  error={this.state.confirmPassword !== this.state.password}
+                  onChange={this.handleChange('confirmPassword')}
+                />
               </DialogContent>
               <DialogActions>
                 <Button
@@ -143,7 +156,7 @@ export default class MySignUp extends SignUp {
                   Enter Code
                 </Button>
                 <Button
-                  disabled={!this.state.username || !this.state.password}
+                  disabled={!this.state.username || !this.state.password || (this.state.password !== this.state.confirmPassword)}
                   color="primary"
                   onClick={this.signUp}
                   >
