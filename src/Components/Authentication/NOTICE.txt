@@ -1,0 +1,13 @@
+NOTICE:
+According to the amazon AWS apache 2.0 license:
+
+The following files within this directory are subject to the license noted at the
+head of each file. These files HAVE been modified for visual appeal and the
+modifications have been clearly noted within the files.
+
+ConfirmSignUp.js
+ForgotPassword.js
+Loading.js
+SignIn.js
+SignUp.js
+VerifyContact.js

@@ -45,16 +45,6 @@ import NavigationIcon from '@material-ui/icons/Navigation';
 // GRID
 import Grid from '@material-ui/core/Grid';
 
-// EDIT DIALOG
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import TextField from '@material-ui/core/TextField';
-
-// MATCH DIALOG
-import ThumbUpIcon from '@material-ui/icons/ThumbUp';
-import ThumbDownIcon from '@material-ui/icons/ThumbDown';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 
 // CUSTOM DIALOGS
@@ -73,8 +63,11 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 // AMPLIFY AUTHENICATOR
-import { SignIn, ConfirmSignIn, ConfirmSignUp, ForgotPassword, SignUp, VerifyContact, withAuthenticator } from 'aws-amplify-react';
-import MySignIn from './Components/MySignIn'
+import { SignIn, ConfirmSignUp, ForgotPassword, SignUp, withAuthenticator } from 'aws-amplify-react';
+import MySignIn from './Components/Authentication/MySignIn';
+import MySignUp from './Components/Authentication/MySignUp';
+import MyConfirmSignUp from './Components/Authentication/MyConfirmSignUp';
+import MyForgotPassword from './Components/Authentication/MyForgotPassword';
 
 // AWS AMPLIFY
 import Amplify, { Auth, API } from 'aws-amplify';
@@ -442,7 +435,6 @@ class App extends Component {
   }
 
   makeMatchButton = (matchObj, i) => {
-    const { classes } = this.props;
     return (
       <Button key={i} onClick={() => this.setState({ viewMatch: matchObj })}>
         {this.state.matchStore[matchObj.hashKey] ? this.state.matchStore[matchObj.hashKey].title : ""}
@@ -585,10 +577,8 @@ App.propTypes = {
 
 export default withStyles(styles)(
   withAuthenticator(App, false, [
-  <SignIn/>,
-  <ConfirmSignIn/>,
-  <VerifyContact/>,
-  <SignUp/>,
-  <ConfirmSignUp/>,
-  <ForgotPassword/>
+  <MySignIn/>,
+  <MySignUp/>,
+  <MyConfirmSignUp/>,
+  <MyForgotPassword/>
 ]))

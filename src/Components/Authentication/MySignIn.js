@@ -1,3 +1,16 @@
+/*
+ * Copyright 2017-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with
+ * the License. A copy of the License is located at
+ *
+ *     http://aws.amazon.com/apache2.0/
+ *
+ * or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+ * and limitations under the License.
+ */
+
 import React from 'react';
 import { Auth, Logger } from 'aws-amplify';
 import { SignIn } from 'aws-amplify-react';
@@ -12,7 +25,8 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import TextField from '@material-ui/core/TextField';
 
-const logger = new Logger('SignIn');
+import LoadingDialog from '../LoadingDialog';
+import AlertDialog from '../AlertDialog';
 
 const theme = createMuiTheme({
   typography: {
@@ -29,7 +43,9 @@ export default class MySignIn extends SignIn {
         this.state = {
             username: "",
             password: "",
-            error: null
+            error: null,
+            loading: false,
+            alert: null,
         }
         this.checkContact = this.checkContact.bind(this);
         this.signIn = this.signIn.bind(this);
@@ -37,21 +53,23 @@ export default class MySignIn extends SignIn {
 
     signIn() {
         const { username, password } = this.state;
-        logger.debug('Sign In for ' + username);
+        this.setState({ loading: true });
         Auth.signIn(username, password)
             .then(user => {
-                logger.debug(user);
                 const requireMFA = (user.Session !== null);
                 if (user.challengeName === 'SMS_MFA') {
                     this.changeState('confirmSignIn', user);
                 } else if (user.challengeName === 'NEW_PASSWORD_REQUIRED') {
-                    logger.debug('require new password', user.challengeParam);
                     this.changeState('requireNewPassword', user);
                 } else {
                     this.checkContact(user);
                 }
+                this.setState({ loading: false });
             })
-            .catch(err => this.error(err));
+            .catch(err => {
+              this.setState({ alert: err.message });
+              this.setState({ loading: false });
+            });
     }
 
   handleChange = name => event => {
@@ -64,7 +82,7 @@ export default class MySignIn extends SignIn {
     return (
       <MuiThemeProvider theme={theme}>
         <Dialog open={true}
-          aria-labelledby="form-dialog-title"
+          hideBackdrop
           fullWidth={true}
           maxWidth={'sm'}
           >
@@ -78,9 +96,7 @@ export default class MySignIn extends SignIn {
               margin="normal"
               variant="outlined"
               value={this.state.username}
-              InputLabelProps={{
-                shrink: true,
-              }}
+              InputLabelProps={{shrink: true}}
               onChange={this.handleChange('username')}
             />
             <TextField
@@ -90,18 +106,22 @@ export default class MySignIn extends SignIn {
               margin="normal"
               variant="outlined"
               type="password"
-              InputLabelProps={{
-                shrink: true,
-              }}
+              InputLabelProps={{shrink: true}}
               value={this.state.password}
               onChange={this.handleChange('password')}
             />
           </DialogContent>
           <DialogActions>
-            <Button color="primary">
+            <Button
+              color="primary"
+              onClick={() => this.changeState('signUp')}
+              >
               Create An Account
             </Button>
-            <Button color="secondary">
+            <Button
+              color="secondary"
+              onClick={() => this.changeState('forgotPassword')}
+              >
               Forgot Password
             </Button>
             <Button
@@ -113,6 +133,11 @@ export default class MySignIn extends SignIn {
             </Button>
           </DialogActions>
         </Dialog>
+        <LoadingDialog open={this.state.loading}/>
+        <AlertDialog
+          value={this.state.alert}
+          onClose={() => this.setState({ alert: null })}
+          />
       </MuiThemeProvider>
     );
   }
