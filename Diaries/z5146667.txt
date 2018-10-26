@@ -1,0 +1,96 @@
+﻿Week 2 - Mon
+Today I met my team mates and we introduced ourselves and exchanged contact details. We also discussed our strengths and weaknesses and what we can bring to the team. I explained to my group how agile methodology works and what times we should meet each week. We then went over the three project specs and chose project two. I created a Jira project and bitbucket repo for the project. 
+
+
+Week 2 - Fri
+Today our group discussed the project requirements and made a table of potential requirements  / features for our implementation. We also researched what prgramming languages and archetecture we will use to implement our solution. We selected aws as our delivery platform and I created an account.
+
+
+Week 3 - Mon
+Today our group went over our table of requirements from last meeting and started forming them into epic stories to go into our project proposal. We catagoried the requirements into sections and then formed epic stories from there. We also brainstormed user features that would be contribute to each epic story. 
+
+
+Week 3 - Fri
+Today our team finished the epic stories from last meeting. We also brainstormed some additional epic stories and their relevant user features. We also reviewed the propsal requirements and created a google document so we could colaboratively work on the proposal to make it ready for submission. We also did some research on the background and technical requirements of our project. 
+
+
+Week 4 - Mon
+Today there was no lab, however three of our team members attended the lab to discuss our proposal after the submission and discussed what our next steps were as a team. We created user stories from our epic stories and created our first sprint that was implementation mainly consisting of epic 1. 
+
+
+Week 4 - Fri
+Today our team was unable to meet, however we worked on sprint 1 at home and continued researching React and Amazon Web Services. I spent most of my time trying to get our web API functional and experienced issues with http requests and cross domain errors.
+
+
+Week 5 - Mon
+Today our team reviewed progress on sprint 1. We are struggling to keep up with the schedule due to lack of experience with the services we are using for this project. We decided as a team we needed to put more time into this sprint if we are expecting to complete all our user stories for this sprint.
+
+
+Week 6 - Mon
+Today was our project demonstration and we had not fully implemented two of our 6 user stories due to authentication errors with our aws api. We had a functional web app and were able to create users, login and view profile information. Even though our team had not fully compeleted what we had planned, we were happy with our progress. We started sprint 2 regardless and aimed to complete sprint 1 as soon as possible. Our tutor also asked us to meet with Lorenzo to discuss our project and see if we were ahearing to the project’s expectations.
+
+
+Week 6 - Fri
+Today we recapped our progress on sprint 2. I finished the rest of sprint 1 and our team had started sprint 2. Yesterday I met with Lorenzo and realised our project needed significant changes. We will need to prospone most of our epic stories until later in the semester and focus on some more urgent features. Lorenzo explained that we should be evaluating a method of solving matching job-seekers with job posts. He suggested we looked at NLP and ZIPF’s law and reconsider the priority of our epics. We have revised our direction on sprint 2 are waiting to update our tutor on our the changes to our project’s direction.
+
+
+Week 7 - Mon
+This meeting also consisted of communicating to the team of what metrics we should use for resume and job analysis. I asked every team member to research and evaluate some metrics for Friday. I showed the team some examples including a github project that used deep learning to identify the personality traits from a body of text.
+
+
+Week 7 - Fri
+Web scraper is now partly functional and can scrape structured data inconsistantly. We confirmed the output format of the json objects from the scraper and Frank gave me a sample json file. Once this was finalised he gave me a data file so I could build a database system and website that would allow us to add the resumes dynamically. 
+
+
+Week 8 - Mon
+After our meeting on Friday, Frank had come back to me with good progress on the web scraper. We met before the tutorial and worked together to import a large list of resume data into the website which is loadable and viewable using the json reader. I now asked Frank to build a scraper for job data and I started modifying the webpage to handle the job data as well as the resume data.
+
+
+Week 8 - Fri
+Our scraper can now scrape jobs data and I implemented functionality to handle job data. I asked Frank to conduct a large scrape of data (both resumes and job posts) to load into our system through the website. The team struggled with identifying metrics for the job and resume analysis, however, I had discovered Google’s NLP API and showed the team how it was capable of extracting important features of a resume. I asked Leon and Georgia to try and get the Big 5 personality code I found on github to work on their local machine.
+
+
+Week 9 - Mon
+Leon and Georgia had not made any progress on the Big 5 metric as they encountered errors with the python dependicies. Frank and I met before the lab to import large amounts of Job and Resume data into our system. We are now capable of viewing and creating jobs and resumes, and have a large dataset to test our program on.
+
+
+Week 9 - Fri
+Throughout the week I discovered that Amazon provided an NLP service from within AWS called Amazon Comprehend. On Friday we started investigating how to match jobs and resumes. I identified a difficulty: DynamoDB does not provide any feature to allow the search of data (only lookups). Therefore I communicated to the team that we needed to identify a method of searching our data pool to find matches between jobs and resumes. 
+
+
+Week 9.5 - Mon
+Over the weekend I discovered elasticsearch and started to read documentation on how to implement it.
+
+
+Week 9.5 - Fri
+Over the week I started implementing code that used Amazon Comprehend to analyse our data to started providing some useful key phrases. 
+
+
+Week 10 - Tue
+I demoed the progress we made by encorporating Amazon Comprehend to extract information from our unstructured text. I discussed with our tutor about our difficulties with being able to search our database and explained that I was meeting Dr. Lorenzo to discuss the final scope of our project so our team could have a clear idea of what we needed to present in week 12.
+
+
+Week 10 - Fri
+I met with Dr Lorenzo on Friday to discuss the final project scope. We settled on providing a simple front-end implementation that would allow to demonstrate the minimum viable product that we could present in week 12. We aggreed that the main features of this interface should include a rating system and a machine learning algorithm to learn from the labelled data generated from the rating system. I asked Leon to implement a neural network in tensorflow to train from the body of each post with their respective rating labels whilst I implemented a frontend to generate this labeled data.
+
+
+Week 11 - Mon
+Over the weekend I started building front-end of our site. I reconstructed the website from a new react application template instead of extending our first website to ensure the code was accurate and concise. 
+
+
+________________
+
+
+Week 11 - Fri
+Throught the whole week I worked all day every single day on this front-end interface. I had poured every hour of my week into this project. Most of the team was busy on other assignments and did not have time to contribute much.
+
+
+Week 12 - Mon
+Today was the presentation. All of our deliverable features were implemented and worked flawlessly in the presentation. I am very proud of the project’s outcome.
+
+
+Week 12 - Fri
+Throughout the week I finalised and componentised the react app code, and asked Leon and Frank to format and comment the neural-net program as well as the web scraper. We also worked on the report which again remained majority in my hands as my team mates claimed to have too much other assignment work.
+
+
+v.tosic@unsw.edu.au

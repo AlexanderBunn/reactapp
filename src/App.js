@@ -258,10 +258,11 @@ class App extends Component {
           // was new item : add item
           this.setState(prevState => ({items: prevState.items.concat(response)}));
         } else {
-          let oldItem = this.state.items.filter(el => el.hashKey === obj.hashKey);
+          let oldItem = this.state.items.filter(el => el.hashKey === obj.hashKey)[0];
+          console.log(oldItem);
           let index = this.state.items.indexOf(oldItem);
           let newItems = this.state.items;
-          newItems[index] = obj;
+          newItems[index] = response;
           this.setState({ items: newItems });
         }
 
