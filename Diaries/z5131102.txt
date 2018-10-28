@@ -1,0 +1,140 @@
+Name: Zhenyu Dong
+
+Date:8.17
+
+Week:3
+
+My objective and goal for this week:  Do something for front end
+
+Process (What I actually did): Do the login page
+
+Did I achieve my goal? :Yes
+
+
+
+Name: Zhenyu Dong
+
+Date:8.24
+
+Week:4
+
+My objective and goal for this week:  Still Do something for front end
+
+Process (What I actually did): Do the search for aws
+
+Did I achieve my goal? :Yes
+
+
+
+Name: Zhenyu Dong
+
+Date:8.31
+
+Week:5
+
+My objective and goal for this week:  Try to use scraper to get data online
+
+Process (What I actually did): Use beautifulsoup retrieve information
+
+Did I achieve my goal? :Yes
+
+
+
+Name: Zhenyu Dong
+
+Date:9.7
+
+Week:6
+
+My objective and goal for this week:  Try to use scraper to get data online
+
+Process (What I actually did): Use beautifulsoup retrieve information
+
+Did I achieve my goal? :Yes
+
+
+
+Name: Zhenyu Dong
+
+Date:9.14
+
+Week:7
+
+My objective and goal for this week:  Try to use scraper to get data online
+
+Process (What I actually did): Use beautifulsoup retrieve information
+
+Did I achieve my goal? :Yes
+
+
+
+Name: Zhenyu Dong
+
+Date:9.21
+
+Week:8
+
+My objective and goal for this week:  Try to build a neural network model for review prediction
+
+Process (What I actually did): Use Rnn with tensor flow to do it
+
+Did I achieve my goal? :Yes
+
+
+
+
+Name: Zhenyu Dong
+
+Date:9.21
+
+Week:9
+
+My objective and goal for this week:  Try to convert words to vector
+
+Process (What I actually did): Use word2vec with tensor flow to do it
+
+Did I achieve my goal? :Yes
+
+
+
+Name: Zhenyu Dong
+
+Date:10.5
+
+Week:10
+
+My objective and goal for this week:  Try to finish neural network
+
+Process (What I actually did): Use tensor flow to do it
+
+Did I achieve my goal? :Yes
+
+
+
+
+Name: Zhenyu Dong
+
+Date:10.12
+
+Week:11
+
+My objective and goal for this week:  Try to use trained model to do prediction
+
+Process (What I actually did): Use tensor flow to do it
+
+Did I achieve my goal? :Yes
+
+
+
+Name: Zhenyu Dong
+
+Date:10.19
+
+Week:12
+
+My objective and goal for this week:  finish all things and test
+
+Process (What I actually did): test all codes
+
+Did I achieve my goal? :Yes
+
